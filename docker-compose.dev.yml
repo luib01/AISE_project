@@ -1,0 +1,94 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: english-learning-dev-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: devpassword
+      MONGO_INITDB_DATABASE: EnglishLearning
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_dev_data:/data/db
+    networks:
+      - english-learning-dev-network
+
+  # Ollama AI Service
+  ollama:
+    image: ollama/ollama:latest
+    container_name: english-learning-dev-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_dev_data:/root/.ollama
+    networks:
+      - english-learning-dev-network
+    environment:
+      - OLLAMA_ORIGINS=*
+
+  # Backend Development with hot reload
+  backend-dev:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: english-learning-dev-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - MONGO_URI=mongodb://admin:devpassword@mongodb:27017/EnglishLearning?authSource=admin
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_MODEL=gemma2:2b
+      - OLLAMA_TIMEOUT=120
+      - OLLAMA_TEMPERATURE=0.7
+      - OLLAMA_MAX_TOKENS=2000
+      - DEFAULT_QUIZ_QUESTIONS=4
+      - LEVEL_UP_THRESHOLD=80
+      - LEVEL_DOWN_THRESHOLD=60
+      - MIN_QUIZZES_FOR_LEVEL_CHANGE=3
+      - PYTHONPATH=/app
+    depends_on:
+      - mongodb
+      - ollama
+    networks:
+      - english-learning-dev-network
+    volumes:
+      - ./backend:/app
+      - /app/__pycache__
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+  # Frontend Development with hot reload
+  frontend-dev:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: english-learning-dev-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+      - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      - backend-dev
+    networks:
+      - english-learning-dev-network
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: ["npm", "start"]
+
+volumes:
+  mongodb_dev_data:
+    driver: local
+  ollama_dev_data:
+    driver: local
+
+networks:
+  english-learning-dev-network:
+    driver: bridge
