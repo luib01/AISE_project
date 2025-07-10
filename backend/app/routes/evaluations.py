@@ -1,8 +1,9 @@
 # backend/app/routes/evaluations.py
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from typing import List, Dict, Any
 from app.models.learning_model import save_quiz_results, update_user_progress, get_user_profile
+from app.routes.auth import get_current_user
 
 router = APIRouter()
 
@@ -16,7 +17,6 @@ class QuestionData(BaseModel):
     difficulty: str = "beginner"
 
 class QuizSubmission(BaseModel):
-    user_id: str
     quiz_data: Dict[str, Any]
     score: int
     topic: str
@@ -24,18 +24,24 @@ class QuizSubmission(BaseModel):
     quiz_type: str = "adaptive"  # "adaptive" or "manual"
 
 @router.post("/evaluate-quiz/")
-async def evaluate_quiz(submission: QuizSubmission):
+async def evaluate_quiz(
+    submission: QuizSubmission,
+    current_user: Dict = Depends(get_current_user)
+):
     """
     Save quiz results + update user progress and English level adaptively.
     """
     try:
+        # Use authenticated user's ID
+        user_id = current_user["user_id"]
+        
         # Get user profile for context
-        user_profile = get_user_profile(submission.user_id)
+        user_profile = get_user_profile(user_id)
         current_level = user_profile.get("english_level", "beginner")
         
         # 1) Save entire quiz results with enhanced information
         save_quiz_results(
-            user_id=submission.user_id,
+            user_id=user_id,
             quiz_data=submission.quiz_data,
             score=submission.score,
             topic=submission.topic,
@@ -61,13 +67,13 @@ async def evaluate_quiz(submission: QuizSubmission):
         for topic, scores in topic_scores.items():
             progress_val = int((scores["correct"] / scores["total"]) * 100)
             update_user_progress(
-                user_id=submission.user_id,
+                user_id=user_id,
                 topic=topic,
                 progress=progress_val
             )
 
         # 3) Get updated user profile to check for level changes
-        updated_profile = get_user_profile(submission.user_id)
+        updated_profile = get_user_profile(user_id)
         new_level = updated_profile.get("english_level", current_level)
         level_changed = new_level != current_level
         
@@ -90,65 +96,3 @@ async def evaluate_quiz(submission: QuizSubmission):
         
     except Exception as e:
         return {"error": f"Error evaluating quiz: {str(e)}"}
-
-@router.get("/user-performance-detailed/{user_id}")
-async def get_detailed_user_performance(user_id: str):
-    """
-    Get detailed user performance including level progression and topic breakdown.
-    """
-    try:
-        user_profile = get_user_profile(user_id)
-        
-        # Get recent quiz history
-        from app.db import get_db
-        db = get_db()
-        
-        recent_quizzes = list(db.Quizzes.find(
-            {"user_id": user_id}
-        ).sort("timestamp", -1).limit(10))
-        
-        # Calculate topic-wise performance
-        topic_performance = {}
-        for quiz in recent_quizzes:
-            topic_perf = quiz.get("topic_performance", {})
-            for topic, perf in topic_perf.items():
-                if topic not in topic_performance:
-                    topic_performance[topic] = {"correct": 0, "total": 0}
-                topic_performance[topic]["correct"] += perf["correct"]
-                topic_performance[topic]["total"] += perf["total"]
-        
-        # Convert to percentages
-        topic_percentages = {}
-        for topic, perf in topic_performance.items():
-            if perf["total"] > 0:
-                topic_percentages[topic] = {
-                    "percentage": round((perf["correct"] / perf["total"]) * 100, 1),
-                    "correct": perf["correct"],
-                    "total": perf["total"]
-                }
-        
-        return {
-            "user_id": user_id,
-            "english_level": user_profile.get("english_level", "beginner"),
-            "total_quizzes": user_profile.get("total_quizzes", 0),
-            "average_score": user_profile.get("average_score", 0.0),
-            "topic_performance": topic_percentages,
-            "recent_quizzes": [
-                {
-                    "score": quiz.get("score", 0),
-                    "topic": quiz.get("topic", "Unknown"),
-                    "difficulty": quiz.get("difficulty", "beginner"),
-                    "timestamp": quiz.get("timestamp")
-                }
-                for quiz in recent_quizzes
-            ],
-            "level_progression": {
-                "current_level": user_profile.get("english_level", "beginner"),
-                "level_changed": user_profile.get("level_changed", False),
-                "previous_level": user_profile.get("previous_level"),
-                "level_change_date": user_profile.get("level_change_date")
-            }
-        }
-        
-    except Exception as e:
-        return {"error": f"Error fetching detailed performance: {str(e)}"}

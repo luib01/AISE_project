@@ -1,19 +1,20 @@
 # backend/app/routes/quiz_generator.py
 import requests
 import json
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import List, Optional, Dict
 from app.config import config
 from app.models.learning_model import get_user_profile, update_english_level
+from app.routes.auth import get_current_user
 
 router = APIRouter()
 
 class AdaptiveQuizRequest(BaseModel):
-    user_id: str
     topic: str  # e.g., "Grammar", "Vocabulary", "Tenses", "Mixed"
     num_questions: int = 4
     force_difficulty: Optional[str] = None  # Optional override for difficulty
+    previous_questions: Optional[List[str]] = []  # Previous questions to avoid repetition
 
 class GeneratedQuestion(BaseModel):
     question: str
@@ -24,14 +25,27 @@ class GeneratedQuestion(BaseModel):
     difficulty: str
 
 @router.post("/generate-adaptive-quiz/")
-async def generate_adaptive_quiz(request: AdaptiveQuizRequest):
+async def generate_adaptive_quiz(
+    request: AdaptiveQuizRequest,
+    current_user: Dict = Depends(get_current_user)
+):
     """
     Generate an adaptive English quiz based on user's current level and performance.
+    Takes into account previous questions to avoid repetition and ensures variety.
     """
     try:
+        print(f"DEBUG: Starting quiz generation for user {current_user['user_id']}")
+        
+        # Use authenticated user's ID
+        user_id = current_user["user_id"]
+        
+        print(f"DEBUG: Getting user profile for {user_id}")
+        
         # Get user profile to determine current English level
-        user_profile = get_user_profile(request.user_id)
+        user_profile = get_user_profile(user_id)
         current_level = user_profile.get("english_level", "beginner")
+        
+        print(f"DEBUG: User level: {current_level}")
         
         # Use forced difficulty if provided, otherwise use user's level
         difficulty = request.force_difficulty or current_level
@@ -40,32 +54,85 @@ async def generate_adaptive_quiz(request: AdaptiveQuizRequest):
         progress = user_profile.get("progress", {})
         weak_topics = [topic for topic, score in progress.items() if score < 70]
         
-        # Craft adaptive prompt based on level and weak areas
+        # Get user's quiz history to analyze patterns
+        quiz_history = user_profile.get("quiz_history", [])
+        recent_topics = [quiz.get("topic", "") for quiz in quiz_history[-10:]]  # Last 10 quizzes
+        recent_subtopics = []
+        for quiz in quiz_history[-5:]:  # Last 5 quizzes
+            recent_subtopics.extend(quiz.get("subtopics_covered", []))
+        
+        # Craft adaptive prompt based on level, weak areas, and previous questions
         level_descriptions = {
-            "beginner": "basic English concepts, simple grammar, common vocabulary",
-            "intermediate": "more complex grammar structures, intermediate vocabulary, context-dependent questions",
-            "advanced": "advanced grammar, nuanced vocabulary, complex sentence structures, idiomatic expressions"
+            "beginner": "basic English concepts, simple grammar, common vocabulary, present/past tense",
+            "intermediate": "more complex grammar structures, intermediate vocabulary, context-dependent questions, conditional sentences, perfect tenses",
+            "advanced": "advanced grammar, nuanced vocabulary, complex sentence structures, idiomatic expressions, subjunctive mood, advanced collocations"
         }
         
+        # Build focus areas section
         focus_areas = ""
         if weak_topics:
             focus_areas = f"Focus especially on these areas where the student needs improvement: {', '.join(weak_topics[:3])}. "
+        
+        # Build variety instructions based on recent activity
+        variety_instructions = ""
+        if recent_topics:
+            topic_counts = {}
+            for topic in recent_topics:
+                topic_counts[topic] = topic_counts.get(topic, 0) + 1
+            most_frequent_topic = max(topic_counts, key=topic_counts.get) if topic_counts else None
+            
+            if most_frequent_topic and topic_counts[most_frequent_topic] >= 3:
+                variety_instructions = f"The student has practiced '{most_frequent_topic}' frequently recently. "
+                if request.topic.lower() == most_frequent_topic.lower():
+                    variety_instructions += f"Since this is another {request.topic} quiz, focus on different subtopics or question types than usual. "
+        
+        if recent_subtopics:
+            variety_instructions += f"Avoid these recently covered subtopics if possible: {', '.join(set(recent_subtopics[-8:]))}. "
+        
+        # Build previous questions avoidance section
+        previous_questions_text = ""
+        if request.previous_questions:
+            previous_questions_text = f"""
+        IMPORTANT: Avoid creating questions similar to these previous ones:
+        {chr(10).join([f"- {q}" for q in request.previous_questions[-10:]])}
+        
+        Create completely different questions with different vocabulary, grammar points, and question formats.
+        """
+        
+        # Topic-specific instructions
+        topic_specific_instructions = {
+            "Grammar": "Include varied grammar points: verb tenses, articles, prepositions, conditionals, passive voice, word order. Mix question types: fill-in-the-blank, error correction, sentence completion.",
+            "Vocabulary": "Cover different aspects: word meanings, synonyms/antonyms, collocations, word formation, context clues. Include various word types: nouns, verbs, adjectives, adverbs.",
+            "Reading": "Provide short passages with comprehension questions: main ideas, specific details, inference, vocabulary in context, author's purpose.",
+            "Usage": "Focus on practical English: common expressions, idioms, formal vs informal language, appropriate register, cultural context.",
+            "Mixed": "Combine all areas equally: 1 grammar + 1 vocabulary + 1 reading + 1 usage question to provide comprehensive practice."
+        }
+        
+        topic_instruction = topic_specific_instructions.get(request.topic, "Create diverse questions appropriate for English learners.")
         
         prompt = f"""
         You are an expert English teacher creating a personalized quiz for a {difficulty} level student.
         
         {focus_areas}
+        {variety_instructions}
         
-        Create {request.num_questions} multiple choice questions for the topic: {request.topic}
+        TOPIC: {request.topic}
+        LEVEL: {difficulty} - {level_descriptions.get(difficulty, 'appropriate for their level')}
         
-        Level: {difficulty} - {level_descriptions.get(difficulty, 'appropriate for their level')}
+        {topic_instruction}
+        
+        {previous_questions_text}
+        
+        Create EXACTLY 4 multiple choice questions for the topic: {request.topic}
         
         Requirements:
-        - Questions should be {difficulty} level appropriate
-        - Include a mix of topics: grammar, vocabulary, reading comprehension, and usage
-        - Each question should have exactly 4 options
-        - Provide clear explanations for correct answers
-        - Make questions engaging and practical
+        - Questions MUST be {difficulty} level appropriate
+        - Each question MUST have exactly 4 options (A, B, C, D)
+        - Provide clear, educational explanations for correct answers
+        - Make questions engaging and practical for real-world English use
+        - Ensure variety in question types and subtopics within {request.topic}
+        - Questions should be progressive in difficulty within the {difficulty} level
+        - Avoid repetition of concepts from previous questions provided above
         
         Format your response as valid JSON only, with this exact structure:
         {{
@@ -74,23 +141,50 @@ async def generate_adaptive_quiz(request: AdaptiveQuizRequest):
                     "question": "Question text here",
                     "options": ["Option A", "Option B", "Option C", "Option D"],
                     "correct_answer": "Option A",
-                    "explanation": "Clear explanation of why this is correct",
-                    "topic": "Grammar",
-                    "difficulty": "{difficulty}"
+                    "explanation": "Clear explanation of why this is correct and why other options are wrong",
+                    "topic": "{request.topic}",
+                    "subtopic": "Specific subtopic (e.g., 'Present Perfect', 'Synonyms', etc.)",
+                    "difficulty": "{difficulty}",
+                    "question_type": "Type of question (e.g., 'Fill-in-blank', 'Multiple choice', 'Error correction')"
+                }},
+                {{
+                    "question": "Second question text here",
+                    "options": ["Option A", "Option B", "Option C", "Option D"],
+                    "correct_answer": "Option B",
+                    "explanation": "Clear explanation of why this is correct and why other options are wrong",
+                    "topic": "{request.topic}",
+                    "subtopic": "Different subtopic from question 1",
+                    "difficulty": "{difficulty}",
+                    "question_type": "Different question type from question 1"
+                }},
+                {{
+                    "question": "Third question text here",
+                    "options": ["Option A", "Option B", "Option C", "Option D"],
+                    "correct_answer": "Option C",
+                    "explanation": "Clear explanation of why this is correct and why other options are wrong",
+                    "topic": "{request.topic}",
+                    "subtopic": "Different subtopic from questions 1 and 2",
+                    "difficulty": "{difficulty}",
+                    "question_type": "Different question type from questions 1 and 2"
+                }},
+                {{
+                    "question": "Fourth question text here",
+                    "options": ["Option A", "Option B", "Option C", "Option D"],
+                    "correct_answer": "Option D",
+                    "explanation": "Clear explanation of why this is correct and why other options are wrong",
+                    "topic": "{request.topic}",
+                    "subtopic": "Different subtopic from questions 1, 2, and 3",
+                    "difficulty": "{difficulty}",
+                    "question_type": "Different question type from questions 1, 2, and 3"
                 }}
             ]
         }}
         
-        Topic guidelines:
-        - Grammar: verb tenses, articles, prepositions, conditionals, passive voice
-        - Vocabulary: synonyms, antonyms, word meanings, collocations
-        - Reading: comprehension, inference, main ideas
-        - Usage: practical English in context, common expressions
-        
-        Make sure all questions are at {difficulty} level and appropriate for English learners.
+        CRITICAL: You MUST generate exactly 4 questions. Each question must be unique and cover different aspects of {request.topic}.
+        Ensure maximum variety while staying within the {request.topic} topic and {difficulty} difficulty level.
         """
         
-        # Usa la configurazione centralizzata per Ollama
+        # Use centralized Ollama configuration
         ollama_config = config.get_ollama_config()
         api_url = f"{ollama_config['base_url']}/api/generate"
         
@@ -99,8 +193,10 @@ async def generate_adaptive_quiz(request: AdaptiveQuizRequest):
             "prompt": prompt,
             "stream": False,
             "options": {
-                "temperature": ollama_config['options']['temperature'],
-                "max_tokens": ollama_config['options']['max_tokens']
+                "temperature": 0.8,  # Increased for more variety
+                "num_predict": ollama_config['options']['max_tokens'],
+                "top_p": 0.9,
+                "repeat_penalty": 1.1
             }
         }
         
@@ -122,18 +218,36 @@ async def generate_adaptive_quiz(request: AdaptiveQuizRequest):
             json_str = generated_text[start_idx:end_idx]
             quiz_data = json.loads(json_str)
             
-            # Add metadata
+            # Validate that we have exactly 4 questions
+            questions = quiz_data.get("questions", [])
+            if len(questions) != 4:
+                # If not exactly 4, create fallback quiz
+                quiz_data = create_adaptive_fallback_quiz(request.topic, difficulty, request.previous_questions, weak_topics)
+            
+            # Add comprehensive metadata
             quiz_data["user_level"] = current_level
             quiz_data["generated_for_level"] = difficulty
             quiz_data["weak_topics"] = weak_topics
-            quiz_data["user_id"] = request.user_id
+            quiz_data["user_id"] = user_id
             quiz_data["model_used"] = ollama_config['model']
+            quiz_data["topic_requested"] = request.topic
+            quiz_data["questions_count"] = len(quiz_data.get("questions", []))
+            quiz_data["previous_questions_considered"] = len(request.previous_questions) if request.previous_questions else 0
+            quiz_data["recent_topics"] = recent_topics[-5:] if recent_topics else []
+            quiz_data["avoided_subtopics"] = list(set(recent_subtopics[-8:])) if recent_subtopics else []
+            
+            # Extract subtopics covered for future reference
+            subtopics_covered = []
+            for question in quiz_data.get("questions", []):
+                if "subtopic" in question:
+                    subtopics_covered.append(question["subtopic"])
+            quiz_data["subtopics_covered"] = subtopics_covered
             
             return quiz_data
             
         except (json.JSONDecodeError, ValueError) as e:
-            # Fallback: create a simple quiz if JSON parsing fails
-            return create_fallback_quiz(request.topic, difficulty, request.num_questions)
+            # Fallback: create an adaptive quiz if JSON parsing fails
+            return create_adaptive_fallback_quiz(request.topic, difficulty, request.previous_questions, weak_topics)
             
     except requests.exceptions.RequestException as e:
         raise HTTPException(status_code=500, detail=f"Ollama connection error: {str(e)}")
@@ -149,61 +263,346 @@ async def get_model_info():
         "base_url": ollama_config['base_url'],
         "timeout": ollama_config['timeout'],
         "temperature": ollama_config['options']['temperature'],
-        "max_tokens": ollama_config['options']['max_tokens'],
+        "num_predict": ollama_config['options']['max_tokens'],
         "available_models": config.get_available_models()
     }
 
 def create_fallback_quiz(topic: str, difficulty: str, num_questions: int) -> Dict:
     """Create a fallback quiz when AI generation fails."""
+    return create_adaptive_fallback_quiz(topic, difficulty, [], [])
+
+def create_adaptive_fallback_quiz(topic: str, difficulty: str, previous_questions: List[str] = None, weak_topics: List[str] = None) -> Dict:
+    """Create an adaptive fallback quiz when AI generation fails, considering previous questions and weak topics."""
+    
+    if previous_questions is None:
+        previous_questions = []
+    if weak_topics is None:
+        weak_topics = []
     
     fallback_questions = {
-        "beginner": [
-            {
-                "question": "Which sentence is correct?",
-                "options": ["I am student", "I am a student", "I am the student", "I student"],
-                "correct_answer": "I am a student",
-                "explanation": "We use 'a' before singular countable nouns when introducing them.",
-                "topic": "Grammar",
-                "difficulty": "beginner"
-            },
-            {
-                "question": "What is the past tense of 'go'?",
-                "options": ["goed", "went", "gone", "goes"],
-                "correct_answer": "went",
-                "explanation": "'Went' is the past tense of the irregular verb 'go'.",
-                "topic": "Grammar",
-                "difficulty": "beginner"
-            }
-        ],
-        "intermediate": [
-            {
-                "question": "If I _____ you, I would study harder.",
-                "options": ["am", "was", "were", "be"],
-                "correct_answer": "were",
-                "explanation": "In second conditional sentences, we use 'were' for all persons after 'if'.",
-                "topic": "Grammar",
-                "difficulty": "intermediate"
-            }
-        ],
-        "advanced": [
-            {
-                "question": "The new policy has been _____ by the committee.",
-                "options": ["ratified", "justified", "clarified", "nullified"],
-                "correct_answer": "ratified",
-                "explanation": "'Ratified' means officially approved or confirmed, which fits the context.",
-                "topic": "Vocabulary",
-                "difficulty": "advanced"
-            }
-        ]
+        "Grammar": {
+            "beginner": [
+                {
+                    "question": "Which sentence is correct?",
+                    "options": ["I am student", "I am a student", "I am the student", "I student"],
+                    "correct_answer": "I am a student",
+                    "explanation": "We use 'a' before singular countable nouns when introducing them for the first time.",
+                    "topic": "Grammar",
+                    "subtopic": "Articles",
+                    "difficulty": "beginner",
+                    "question_type": "Multiple choice"
+                },
+                {
+                    "question": "What is the past tense of 'go'?",
+                    "options": ["goed", "went", "gone", "goes"],
+                    "correct_answer": "went",
+                    "explanation": "'Went' is the past tense of the irregular verb 'go'. 'Gone' is the past participle.",
+                    "topic": "Grammar",
+                    "subtopic": "Irregular Verbs",
+                    "difficulty": "beginner",
+                    "question_type": "Verb forms"
+                },
+                {
+                    "question": "Choose the correct form: 'She _____ to work every day.'",
+                    "options": ["go", "goes", "going", "gone"],
+                    "correct_answer": "goes",
+                    "explanation": "With third person singular (he/she/it), we add 's' to the verb in present simple.",
+                    "topic": "Grammar",
+                    "subtopic": "Present Simple",
+                    "difficulty": "beginner",
+                    "question_type": "Fill-in-blank"
+                },
+                {
+                    "question": "Which is the correct plural form of 'child'?",
+                    "options": ["childs", "children", "childes", "child"],
+                    "correct_answer": "children",
+                    "explanation": "'Children' is the irregular plural form of 'child'.",
+                    "topic": "Grammar",
+                    "subtopic": "Plural Forms",
+                    "difficulty": "beginner",
+                    "question_type": "Word forms"
+                }
+            ],
+            "intermediate": [
+                {
+                    "question": "If I _____ you, I would study harder.",
+                    "options": ["am", "was", "were", "be"],
+                    "correct_answer": "were",
+                    "explanation": "In second conditional sentences, we use 'were' for all persons after 'if'.",
+                    "topic": "Grammar",
+                    "subtopic": "Conditionals",
+                    "difficulty": "intermediate",
+                    "question_type": "Conditional sentences"
+                },
+                {
+                    "question": "The report _____ by tomorrow morning.",
+                    "options": ["must finish", "must be finished", "must have finished", "must finishing"],
+                    "correct_answer": "must be finished",
+                    "explanation": "We use passive voice (must be + past participle) when the action is done to the subject.",
+                    "topic": "Grammar",
+                    "subtopic": "Passive Voice",
+                    "difficulty": "intermediate",
+                    "question_type": "Passive construction"
+                },
+                {
+                    "question": "I wish I _____ more time to finish the project.",
+                    "options": ["have", "had", "will have", "would have"],
+                    "correct_answer": "had",
+                    "explanation": "After 'wish' for present situations, we use past tense to express regret about the present.",
+                    "topic": "Grammar",
+                    "subtopic": "Wish Sentences",
+                    "difficulty": "intermediate",
+                    "question_type": "Subjunctive mood"
+                },
+                {
+                    "question": "She's been working here _____ five years.",
+                    "options": ["since", "for", "during", "from"],
+                    "correct_answer": "for",
+                    "explanation": "We use 'for' with periods of time (five years), and 'since' with specific points in time.",
+                    "topic": "Grammar",
+                    "subtopic": "Prepositions of Time",
+                    "difficulty": "intermediate",
+                    "question_type": "Preposition usage"
+                }
+            ],
+            "advanced": [
+                {
+                    "question": "Had she studied harder, she _____ the exam.",
+                    "options": ["would pass", "would have passed", "will pass", "had passed"],
+                    "correct_answer": "would have passed",
+                    "explanation": "This is a third conditional with inversion. 'Had she studied' = 'If she had studied', so we need 'would have passed'.",
+                    "topic": "Grammar",
+                    "subtopic": "Advanced Conditionals",
+                    "difficulty": "advanced",
+                    "question_type": "Conditional inversion"
+                },
+                {
+                    "question": "The committee insisted that he _____ present at the meeting.",
+                    "options": ["is", "was", "be", "will be"],
+                    "correct_answer": "be",
+                    "explanation": "After verbs like 'insist', 'suggest', 'recommend', we use the subjunctive mood (base form of verb).",
+                    "topic": "Grammar",
+                    "subtopic": "Subjunctive Mood",
+                    "difficulty": "advanced",
+                    "question_type": "Subjunctive usage"
+                },
+                {
+                    "question": "_____ the weather, we decided to proceed with the outdoor event.",
+                    "options": ["Despite", "Although", "Even though", "In spite"],
+                    "correct_answer": "Despite",
+                    "explanation": "'Despite' is followed by a noun phrase. 'Although' and 'even though' are followed by clauses. 'In spite' needs 'of'.",
+                    "topic": "Grammar",
+                    "subtopic": "Concessive Connectors",
+                    "difficulty": "advanced",
+                    "question_type": "Connector usage"
+                },
+                {
+                    "question": "No sooner _____ the announcement than chaos erupted.",
+                    "options": ["had they made", "they had made", "did they make", "they made"],
+                    "correct_answer": "had they made",
+                    "explanation": "After 'no sooner' we use inversion with past perfect: 'No sooner had + subject + past participle'.",
+                    "topic": "Grammar",
+                    "subtopic": "Inversion",
+                    "difficulty": "advanced",
+                    "question_type": "Advanced inversion"
+                }
+            ]
+        },
+        "Vocabulary": {
+            "beginner": [
+                {
+                    "question": "What does 'happy' mean?",
+                    "options": ["sad", "angry", "joyful", "tired"],
+                    "correct_answer": "joyful",
+                    "explanation": "'Happy' means feeling pleasure or contentment, which is the same as 'joyful'.",
+                    "topic": "Vocabulary",
+                    "subtopic": "Basic Emotions",
+                    "difficulty": "beginner",
+                    "question_type": "Synonyms"
+                },
+                {
+                    "question": "Choose the opposite of 'big':",
+                    "options": ["large", "huge", "small", "tall"],
+                    "correct_answer": "small",
+                    "explanation": "'Small' is the opposite of 'big'. 'Large' and 'huge' are synonyms of 'big'.",
+                    "topic": "Vocabulary",
+                    "subtopic": "Size Adjectives",
+                    "difficulty": "beginner",
+                    "question_type": "Antonyms"
+                },
+                {
+                    "question": "What do you use to write?",
+                    "options": ["fork", "pen", "cup", "shoe"],
+                    "correct_answer": "pen",
+                    "explanation": "A pen is a tool used for writing. The other options are not writing instruments.",
+                    "topic": "Vocabulary",
+                    "subtopic": "Common Objects",
+                    "difficulty": "beginner",
+                    "question_type": "Word meanings"
+                },
+                {
+                    "question": "Which word means 'very cold'?",
+                    "options": ["warm", "hot", "freezing", "cool"],
+                    "correct_answer": "freezing",
+                    "explanation": "'Freezing' means extremely cold, below the temperature at which water turns to ice.",
+                    "topic": "Vocabulary",
+                    "subtopic": "Temperature",
+                    "difficulty": "beginner",
+                    "question_type": "Intensity adjectives"
+                }
+            ],
+            "intermediate": [
+                {
+                    "question": "What does 'procrastinate' mean?",
+                    "options": ["to hurry up", "to delay doing something", "to finish quickly", "to work hard"],
+                    "correct_answer": "to delay doing something",
+                    "explanation": "'Procrastinate' means to postpone or delay doing something, especially out of laziness or habit.",
+                    "topic": "Vocabulary",
+                    "subtopic": "Academic Vocabulary",
+                    "difficulty": "intermediate",
+                    "question_type": "Word definitions"
+                },
+                {
+                    "question": "Choose the best synonym for 'meticulous':",
+                    "options": ["careless", "detailed", "quick", "lazy"],
+                    "correct_answer": "detailed",
+                    "explanation": "'Meticulous' means showing great attention to detail, being very careful and precise.",
+                    "topic": "Vocabulary",
+                    "subtopic": "Descriptive Adjectives",
+                    "difficulty": "intermediate",
+                    "question_type": "Synonyms"
+                },
+                {
+                    "question": "The company decided to _____ their outdated policies.",
+                    "options": ["revise", "revive", "reverse", "reveal"],
+                    "content": "All options start with 'rev-' but have different meanings. 'Revise' means to review and make changes.",
+                    "correct_answer": "revise",
+                    "explanation": "'Revise' means to examine and make corrections or improvements to something.",
+                    "topic": "Vocabulary",
+                    "subtopic": "Business Vocabulary",
+                    "difficulty": "intermediate",
+                    "question_type": "Context usage"
+                },
+                {
+                    "question": "What does the phrasal verb 'put off' mean?",
+                    "options": ["to wear", "to postpone", "to turn on", "to remove"],
+                    "correct_answer": "to postpone",
+                    "explanation": "'Put off' is a phrasal verb meaning to delay or postpone something until later.",
+                    "topic": "Vocabulary",
+                    "subtopic": "Phrasal Verbs",
+                    "difficulty": "intermediate",
+                    "question_type": "Phrasal verb meanings"
+                }
+            ],
+            "advanced": [
+                {
+                    "question": "The new policy has been _____ by the committee.",
+                    "options": ["ratified", "justified", "clarified", "nullified"],
+                    "correct_answer": "ratified",
+                    "explanation": "'Ratified' means officially approved or confirmed, which fits the context of policy approval.",
+                    "topic": "Vocabulary",
+                    "subtopic": "Formal Vocabulary",
+                    "difficulty": "advanced",
+                    "question_type": "Context-dependent usage"
+                },
+                {
+                    "question": "Her _____ for detail made her an excellent editor.",
+                    "options": ["penchant", "pendant", "repentant", "attendant"],
+                    "correct_answer": "penchant",
+                    "explanation": "'Penchant' means a strong inclination or liking for something. The other words are unrelated.",
+                    "topic": "Vocabulary",
+                    "subtopic": "Advanced Nouns",
+                    "difficulty": "advanced",
+                    "question_type": "Word choice"
+                },
+                {
+                    "question": "The CEO's decision was considered _____ by many shareholders.",
+                    "options": ["prudent", "imprudent", "student", "incident"],
+                    "correct_answer": "imprudent",
+                    "explanation": "'Imprudent' means lacking wisdom or good judgment. The context suggests criticism from shareholders.",
+                    "topic": "Vocabulary",
+                    "subtopic": "Evaluative Adjectives",
+                    "difficulty": "advanced",
+                    "question_type": "Connotation"
+                },
+                {
+                    "question": "What does 'ubiquitous' mean?",
+                    "options": ["rare", "present everywhere", "ancient", "mysterious"],
+                    "correct_answer": "present everywhere",
+                    "explanation": "'Ubiquitous' means existing or being everywhere at the same time; omnipresent.",
+                    "topic": "Vocabulary",
+                    "subtopic": "Academic Adjectives",
+                    "difficulty": "advanced",
+                    "question_type": "Advanced definitions"
+                }
+            ]
+        }
     }
     
-    questions = fallback_questions.get(difficulty, fallback_questions["beginner"])
-    selected_questions = questions[:num_questions] if len(questions) >= num_questions else questions
+    # Get questions for the specific topic and difficulty
+    topic_questions = fallback_questions.get(topic, fallback_questions["Grammar"])
+    questions_pool = topic_questions.get(difficulty, topic_questions["beginner"])
+    
+    # Filter out questions similar to previous ones if provided
+    filtered_questions = []
+    if previous_questions:
+        for question in questions_pool:
+            question_text = question["question"].lower()
+            is_similar = False
+            for prev_q in previous_questions:
+                prev_q_lower = prev_q.lower()
+                # Check for similar keywords or concepts
+                if (any(word in question_text for word in prev_q_lower.split() if len(word) > 3) or
+                    question["subtopic"].lower() in prev_q_lower):
+                    is_similar = True
+                    break
+            if not is_similar:
+                filtered_questions.append(question)
+    else:
+        filtered_questions = questions_pool
+    
+    # If we filtered out too many, add some back
+    if len(filtered_questions) < 4:
+        filtered_questions = questions_pool
+    
+    # Select exactly 4 questions, prioritizing weak topics if available
+    selected_questions = []
+    weak_topic_questions = []
+    other_questions = []
+    
+    for question in filtered_questions:
+        if weak_topics and any(weak_topic.lower() in question["subtopic"].lower() for weak_topic in weak_topics):
+            weak_topic_questions.append(question)
+        else:
+            other_questions.append(question)
+    
+    # Try to include questions from weak topics first
+    selected_questions.extend(weak_topic_questions[:2])  # Max 2 from weak topics
+    remaining_needed = 4 - len(selected_questions)
+    selected_questions.extend(other_questions[:remaining_needed])
+    
+    # If still not enough, add more from any available
+    if len(selected_questions) < 4:
+        all_available = weak_topic_questions + other_questions
+        for question in all_available:
+            if question not in selected_questions and len(selected_questions) < 4:
+                selected_questions.append(question)
+    
+    # Ensure we have exactly 4 questions
+    while len(selected_questions) < 4:
+        selected_questions.append(questions_pool[len(selected_questions) % len(questions_pool)])
+    
+    selected_questions = selected_questions[:4]  # Limit to exactly 4
     
     return {
         "questions": selected_questions,
         "generated_for_level": difficulty,
-        "fallback": True
+        "fallback": True,
+        "topic_requested": topic,
+        "questions_count": len(selected_questions),
+        "subtopics_covered": [q["subtopic"] for q in selected_questions],
+        "previous_questions_considered": len(previous_questions) if previous_questions else 0,
+        "weak_topics_targeted": len(weak_topic_questions)
     }
 
 @router.get("/user-profile/{user_id}")
@@ -287,7 +686,7 @@ async def change_model(new_model: str):
             "model": new_model,
             "prompt": test_prompt,
             "stream": False,
-            "options": {"temperature": 0.1, "max_tokens": 20}
+            "options": {"temperature": 0.1, "num_predict": 20}
         }
         
         response = requests.post(api_url, json=payload, timeout=30)
@@ -320,7 +719,7 @@ async def health_check():
             "model": ollama_config['model'],
             "prompt": "Test",
             "stream": False,
-            "options": {"temperature": 0.1, "max_tokens": 5}
+            "options": {"temperature": 0.1, "num_predict": 5}
         }
         
         response = requests.post(api_url, json=payload, timeout=10)

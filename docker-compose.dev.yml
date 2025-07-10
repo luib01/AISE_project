@@ -17,9 +17,11 @@ services:
     networks:
       - english-learning-dev-network
 
-  # Ollama AI Service
+  # Ollama AI Service with automatic model pulling
   ollama:
-    image: ollama/ollama:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.ollama
     container_name: english-learning-dev-ollama
     restart: unless-stopped
     ports:
@@ -30,6 +32,19 @@ services:
       - english-learning-dev-network
     environment:
       - OLLAMA_ORIGINS=*
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
 
   # Backend Development with hot reload
   backend-dev:
@@ -38,15 +53,22 @@ services:
       dockerfile: Dockerfile.dev
     container_name: english-learning-dev-backend
     restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
     ports:
       - "8000:8000"
     environment:
       - MONGO_URI=mongodb://admin:devpassword@mongodb:27017/EnglishLearning?authSource=admin
       - OLLAMA_BASE_URL=http://ollama:11434
-      - OLLAMA_MODEL=gemma2:2b
-      - OLLAMA_TIMEOUT=120
+      - OLLAMA_MODEL=mistral:7b
+      - OLLAMA_TIMEOUT=180
       - OLLAMA_TEMPERATURE=0.7
-      - OLLAMA_MAX_TOKENS=2000
+      - OLLAMA_MAX_TOKENS=4000
       - DEFAULT_QUIZ_QUESTIONS=4
       - LEVEL_UP_THRESHOLD=80
       - LEVEL_DOWN_THRESHOLD=60
@@ -60,7 +82,6 @@ services:
     volumes:
       - ./backend:/app
       - /app/__pycache__
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
   # Frontend Development with hot reload
   frontend-dev:

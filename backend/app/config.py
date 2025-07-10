@@ -16,16 +16,16 @@ class Config:
     """Configurazione dell'applicazione"""
     
     # Database
-    MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/EnglishLearning")
+    MONGO_URI = os.getenv("MONGO_URI", "mongodb://admin:devpassword@mongodb:27017/EnglishLearning?authSource=admin")
     
     # Ollama Configuration
-    OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
-    OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "gemma2:2b")
+    OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
+    OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "mistral:7b")
     
     # Ollama API Settings
-    OLLAMA_TIMEOUT = int(os.getenv("OLLAMA_TIMEOUT", "120"))
+    OLLAMA_TIMEOUT = int(os.getenv("OLLAMA_TIMEOUT", "180"))
     OLLAMA_TEMPERATURE = float(os.getenv("OLLAMA_TEMPERATURE", "0.7"))
-    OLLAMA_MAX_TOKENS = int(os.getenv("OLLAMA_MAX_TOKENS", "2000"))
+    OLLAMA_MAX_TOKENS = int(os.getenv("OLLAMA_MAX_TOKENS", "4000"))
     
     # Quiz Settings
     DEFAULT_QUIZ_QUESTIONS = int(os.getenv("DEFAULT_QUIZ_QUESTIONS", "4"))

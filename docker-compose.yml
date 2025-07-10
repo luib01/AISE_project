@@ -24,9 +24,11 @@ services:
       retries: 3
       start_period: 20s
 
-  # Ollama AI Service
+  # Ollama AI Service with automatic model pulling
   ollama:
-    image: ollama/ollama:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.ollama
     container_name: english-learning-ollama
     restart: unless-stopped
     ports:
@@ -37,6 +39,13 @@ services:
       - english-learning-network
     environment:
       - OLLAMA_ORIGINS=*
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
     healthcheck:
       test: ["CMD", "ollama", "list"]
       interval: 60s
@@ -53,13 +62,20 @@ services:
     restart: unless-stopped
     ports:
       - "8000:8000"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
     environment:
       - MONGO_URI=mongodb://admin:password123@mongodb:27017/EnglishLearning?authSource=admin
       - OLLAMA_BASE_URL=http://ollama:11434
-      - OLLAMA_MODEL=llama3.2:1b
-      - OLLAMA_TIMEOUT=180
+      - OLLAMA_MODEL=mistral:7b
+      - OLLAMA_TIMEOUT=240
       - OLLAMA_TEMPERATURE=0.7
-      - OLLAMA_MAX_TOKENS=1500
+      - OLLAMA_MAX_TOKENS=4000
       - DEFAULT_QUIZ_QUESTIONS=4
       - LEVEL_UP_THRESHOLD=80
       - LEVEL_DOWN_THRESHOLD=60

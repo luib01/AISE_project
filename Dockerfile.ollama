@@ -1,0 +1,13 @@
+# Custom Ollama Dockerfile with automatic model pulling
+FROM ollama/ollama:latest
+
+# Install bash and curl for the initialization script
+USER root
+RUN apt-get update && apt-get install -y bash curl && rm -rf /var/lib/apt/lists/*
+
+# Copy the initialization script
+COPY ollama-init.sh /usr/local/bin/ollama-init.sh
+RUN chmod +x /usr/local/bin/ollama-init.sh
+
+# Use bash as entrypoint to run our initialization script
+ENTRYPOINT ["/bin/bash", "/usr/local/bin/ollama-init.sh"]

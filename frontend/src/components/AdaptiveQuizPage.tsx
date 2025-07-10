@@ -1,5 +1,6 @@
 // frontend/src/components/AdaptiveQuizPage.tsx
 import React, { useState, useEffect } from "react";
+import { useAuth } from "../contexts/AuthContext.tsx";
 import apiClient from "../api/apiClient.ts";
 import { 
   ADAPTIVE_QUIZ_ENDPOINT, 
@@ -34,7 +35,7 @@ interface Topic {
 }
 
 const AdaptiveQuizPage: React.FC = () => {
-  const [userId, setUserId] = useState("user123");
+  const { user } = useAuth();
   const [selectedTopic, setSelectedTopic] = useState("Mixed");
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -44,15 +45,19 @@ const AdaptiveQuizPage: React.FC = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [topics, setTopics] = useState<Topic[]>([]);
   const [quizResult, setQuizResult] = useState<any>(null);
+  const [detailedResults, setDetailedResults] = useState<any[]>([]);
 
   useEffect(() => {
-    loadUserProfile();
-    loadTopics();
-  }, [userId]);
+    if (user) {
+      loadUserProfile();
+      loadTopics();
+    }
+  }, [user]);
 
   const loadUserProfile = async () => {
+    if (!user) return;
     try {
-      const response = await apiClient.get(`${USER_PROFILE_ENDPOINT}${userId}`);
+      const response = await apiClient.get(`${USER_PROFILE_ENDPOINT}${user.user_id}`);
       setUserProfile(response.data);
     } catch (err) {
       console.error("Error loading user profile:", err);
@@ -69,8 +74,8 @@ const AdaptiveQuizPage: React.FC = () => {
   };
 
   const generateAdaptiveQuiz = async () => {
-    if (!userId.trim()) {
-      setError("Please enter a User ID");
+    if (!user) {
+      setError("User not authenticated");
       return;
     }
 
@@ -82,7 +87,6 @@ const AdaptiveQuizPage: React.FC = () => {
 
     try {
       const response = await apiClient.post(ADAPTIVE_QUIZ_ENDPOINT, {
-        user_id: userId,
         topic: selectedTopic,
         num_questions: 4
       });
@@ -126,9 +130,11 @@ const AdaptiveQuizPage: React.FC = () => {
 
     const score = Math.round((totalCorrect / questions.length) * 100);
 
+    // Store detailed results for display
+    setDetailedResults(quizData);
+
     try {
       const response = await apiClient.post(QUIZ_EVALUATION_ENDPOINT, {
-        user_id: userId,
         quiz_data: { questions: quizData },
         score,
         topic: selectedTopic,
@@ -203,20 +209,7 @@ const AdaptiveQuizPage: React.FC = () => {
 
       {!submitted && (
         <>
-          <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="userId" className="block font-medium mb-1">
-                User ID:
-              </label>
-              <input
-                id="userId"
-                type="text"
-                className="border border-gray-300 rounded px-3 py-2 w-full"
-                value={userId}
-                onChange={(e) => setUserId(e.target.value)}
-                placeholder="Enter your user ID"
-              />
-            </div>
+          <div className="mb-6 grid grid-cols-1 gap-4">
             <div>
               <label htmlFor="topic" className="block font-medium mb-1">
                 Topic:
@@ -332,6 +325,69 @@ const AdaptiveQuizPage: React.FC = () => {
             </div>
           </div>
 
+          {/* Detailed Question Results */}
+          <div className="space-y-4">
+            <h4 className="text-xl font-semibold text-gray-800 border-b pb-2">Question Review</h4>
+            {detailedResults.map((result, index) => (
+              <div 
+                key={index} 
+                className={`p-4 rounded-lg border-2 ${
+                  result.isCorrect 
+                    ? 'bg-green-50 border-green-200' 
+                    : 'bg-red-50 border-red-200'
+                }`}
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1">
+                    <h5 className="font-medium text-gray-800 mb-2">
+                      Question {index + 1}: {result.question}
+                    </h5>
+                    <div className="flex gap-2 mb-2">
+                      <span className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                        {result.topic}
+                      </span>
+                      <span className="inline-block px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded-full">
+                        {result.difficulty}
+                      </span>
+                    </div>
+                  </div>
+                  <div className={`text-2xl ${result.isCorrect ? 'text-green-600' : 'text-red-600'}`}>
+                    {result.isCorrect ? '✅' : '❌'}
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className={`p-3 rounded ${
+                    result.isCorrect ? 'bg-green-100 border border-green-300' : 'bg-red-100 border border-red-300'
+                  }`}>
+                    <span className="font-medium text-gray-700">Your Answer: </span>
+                    <span className={`font-semibold ${
+                      result.isCorrect ? 'text-green-700' : 'text-red-700'
+                    }`}>
+                      {result.userAnswer || 'No answer selected'}
+                    </span>
+                  </div>
+                  
+                  {!result.isCorrect && (
+                    <div className="p-3 bg-green-100 border border-green-300 rounded">
+                      <span className="font-medium text-gray-700">Correct Answer: </span>
+                      <span className="font-semibold text-green-700">
+                        {result.correctAnswer}
+                      </span>
+                    </div>
+                  )}
+
+                  {result.explanation && (
+                    <div className="p-3 bg-blue-100 border border-blue-300 rounded">
+                      <span className="font-medium text-gray-700">Explanation: </span>
+                      <span className="text-blue-800">{result.explanation}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
           <div className="text-center">
             <button
               className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition duration-200 mr-4"
@@ -340,15 +396,16 @@ const AdaptiveQuizPage: React.FC = () => {
                 setQuestions([]);
                 setAnswers({});
                 setQuizResult(null);
+                setDetailedResults([]);
               }}
             >
               Take Another Quiz
             </button>
             <a
-              href="/learning-path"
+              href="/progress"
               className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition duration-200 inline-block"
             >
-              View Learning Path
+              View Progress
             </a>
           </div>
         </div>

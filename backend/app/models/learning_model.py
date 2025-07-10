@@ -1,43 +1,88 @@
 # backend/app/models/learning_model.py
 from datetime import datetime
 from app.db import get_db
+from app.config import config
 from typing import Dict, List, Optional
+from bson import ObjectId
 
 db = get_db()
 
 def get_user_profile(user_id: str) -> Dict:
     """Get user profile including English level and progress."""
-    user_profile = db.Users.find_one({"user_id": user_id})
-    if not user_profile:
-        # Create default profile for new user
-        default_profile = {
-            "user_id": user_id,
-            "english_level": "beginner",  # beginner, intermediate, advanced
-            "progress": {},
-            "created_at": datetime.utcnow(),
-            "total_quizzes": 0,
-            "average_score": 0.0,
-            "last_quiz_date": None
-        }
-        db.Users.insert_one(default_profile)
-        return default_profile
-    return user_profile
+    try:
+        # Get user from auth users collection
+        user_profile = db.users.find_one({"_id": ObjectId(user_id)})
+        if user_profile:
+            # Convert ObjectId to string for JSON serialization
+            user_profile["user_id"] = str(user_profile["_id"])
+            user_profile.pop("_id", None)
+            user_profile.pop("password", None)  # Don't return password
+            
+            # Ensure required fields exist
+            if "progress" not in user_profile:
+                user_profile["progress"] = {}
+            if "total_quizzes" not in user_profile:
+                user_profile["total_quizzes"] = 0
+            if "average_score" not in user_profile:
+                user_profile["average_score"] = 0.0
+            
+            # Get recent quiz history for adaptive learning
+            recent_quizzes = list(db.Quizzes.find(
+                {"user_id": user_id}
+            ).sort("timestamp", -1).limit(10))  # Last 10 quizzes
+            
+            # Format quiz history for adaptive learning
+            quiz_history = []
+            for quiz in recent_quizzes:
+                quiz_info = {
+                    "topic": quiz.get("topic", "Unknown"),
+                    "difficulty": quiz.get("difficulty", "beginner"),
+                    "score": quiz.get("score", 0),
+                    "timestamp": quiz.get("timestamp"),
+                    "subtopics_covered": quiz.get("subtopics_covered", []),
+                    "questions": [q.get("question", "") for q in quiz.get("questions", [])]
+                }
+                quiz_history.append(quiz_info)
+            
+            user_profile["quiz_history"] = quiz_history
+            return user_profile
+        else:
+            # User not found, this shouldn't happen with auth
+            raise ValueError(f"User {user_id} not found")
+    except Exception as e:
+        raise ValueError(f"Error getting user profile: {str(e)}")
 
 def update_english_level(user_id: str, new_level: str) -> None:
     """Update user's English level."""
-    db.Users.update_one(
-        {"user_id": user_id},
-        {"$set": {"english_level": new_level, "level_updated_at": datetime.utcnow()}},
-        upsert=True
-    )
+    try:
+        db.users.update_one(
+            {"_id": ObjectId(user_id)},
+            {
+                "$set": {
+                    "english_level": new_level,
+                    "level_changed": True,
+                    "level_change_date": datetime.utcnow()
+                }
+            }
+        )
+    except Exception as e:
+        print(f"Error updating English level: {e}")
 
-# backend/app/models/learning_model.py
-from datetime import datetime
-from app.db import get_db
-from app.config import config
-from typing import Dict, List, Optional
-
-db = get_db()
+def update_user_progress(user_id: str, topic: str, progress: float) -> None:
+    """Update user's progress for a specific topic."""
+    try:
+        # Update in the users collection
+        db.users.update_one(
+            {"_id": ObjectId(user_id)},
+            {
+                "$set": {
+                    f"progress.{topic}": progress,
+                    "last_updated": datetime.utcnow()
+                }
+            }
+        )
+    except Exception as e:
+        print(f"Error updating user progress: {e}")
 
 def calculate_adaptive_level(user_id: str, quiz_score: int, topic_performance: Dict) -> str:
     """
@@ -58,17 +103,17 @@ def calculate_adaptive_level(user_id: str, quiz_score: int, topic_performance: D
     # Calculate average score from recent quizzes
     avg_score = sum(quiz.get("score", 0) for quiz in recent_quizzes) / len(recent_quizzes)
     
-    # Level progression logic usando le soglie dalla configurazione
+    # Level progression logic using config thresholds
     if current_level == "beginner":
         if avg_score >= config.LEVEL_UP_THRESHOLD and len(recent_quizzes) >= config.MIN_QUIZZES_FOR_LEVEL_CHANGE:
             return "intermediate"
     elif current_level == "intermediate":
-        if avg_score >= config.LEVEL_UP_THRESHOLD + 5 and len(recent_quizzes) >= config.MIN_QUIZZES_FOR_LEVEL_CHANGE:  # Threshold più alto per advanced
+        if avg_score >= config.LEVEL_UP_THRESHOLD + 5 and len(recent_quizzes) >= config.MIN_QUIZZES_FOR_LEVEL_CHANGE:  # Higher threshold for advanced
             return "advanced"
         elif avg_score < config.LEVEL_DOWN_THRESHOLD:
             return "beginner"
     elif current_level == "advanced":
-        if avg_score < config.LEVEL_DOWN_THRESHOLD + 10:  # Threshold più alto per non retrocedere troppo facilmente
+        if avg_score < config.LEVEL_DOWN_THRESHOLD + 10:  # Higher threshold to not demote too easily
             return "intermediate"
     
     return current_level
@@ -132,19 +177,8 @@ def save_quiz_results(user_id: str, quiz_data: dict, score: int, topic: str, dif
         update_data["previous_level"] = current_level
         update_data["level_change_date"] = datetime.utcnow()
     
-    db.Users.update_one(
-        {"user_id": user_id},
-        {"$set": update_data},
-        upsert=True
-    )
-
-def update_user_progress(user_id: str, topic: str, progress: int) -> None:
-    """
-    Update the user's progress in 'Users' collection.
-    For a given topic, we store an integer score (0-100).
-    """
-    db.Users.update_one(
-        {"user_id": user_id},
-        {"$set": {f"progress.{topic}": progress}},
-        upsert=True
+    # Update the users collection (auth users)
+    db.users.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": update_data}
     )

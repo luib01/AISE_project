@@ -15,7 +15,7 @@ echo "✅ Ollama is ready!"
 
 # List of models to download
 MODELS=(
-    "gemma2:2b"
+    "mistral:7b"
 )
 
 # Download models
