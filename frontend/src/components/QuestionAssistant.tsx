@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import apiClient from "../api/apiClient.ts";
-import { QUESTIONS_ENDPOINT } from "../api/endpoints.ts";
+import apiClient from "../api/apiClient";
+import { QUESTIONS_ENDPOINT } from "../api/endpoints";
 
 const QuestionAssistant = () => {
   const [question, setQuestion] = useState("");
@@ -32,7 +32,7 @@ const QuestionAssistant = () => {
   return (
     <div className="max-w-xl mx-auto p-4">
       <h2 className="text-2xl font-bold text-center mb-4">
-        AI Question Assistant
+        AI Teacher - Q&A
       </h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>

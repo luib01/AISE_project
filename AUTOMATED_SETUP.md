@@ -18,7 +18,7 @@ This document describes the fully automated setup for the English Learning Platf
 - **Graceful Fallback**: Continues startup even if model tests fail (with warnings)
 
 ### 📚 Enhanced AI Features
-- **Teacher-Style Responses**: Chat AI provides encouraging, short paragraphs as a language teacher
+- **Teacher-Style Responses**: AI Teacher provides encouraging, short paragraphs as a language teacher
 - **Adaptive Quiz Generation**: Always generates 4 questions, avoids repetition, uses user history
 - **Level-Aware Teaching**: `/teacher-chat/` endpoint adapts to user's proficiency level
 

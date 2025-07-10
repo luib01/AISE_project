@@ -1,8 +1,8 @@
 // frontend/src/components/SignUpPage.tsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import apiClient from '../api/apiClient.ts';
-import { AUTH_SIGNUP_ENDPOINT } from '../api/endpoints.ts';
+import apiClient from '../api/apiClient';
+import { AUTH_SIGNUP_ENDPOINT } from '../api/endpoints';
 
 const SignUpPage: React.FC = () => {
   const [username, setUsername] = useState('');

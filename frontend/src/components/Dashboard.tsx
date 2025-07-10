@@ -1,11 +1,12 @@
 // frontend/src/components/Dashboard.tsx
 import React, { useEffect, useRef, useState } from "react";
-import Chart from "chart.js/auto";
-import apiClient from "../api/apiClient.ts";
-import { USER_PERFORMANCE_DETAILED_ENDPOINT } from "../api/endpoints.ts";
-import { useAuth } from "../contexts/AuthContext.tsx";
+import Chart, { ChartDataset } from "chart.js/auto";
+import apiClient from "../api/apiClient";
+import { USER_PERFORMANCE_DETAILED_ENDPOINT } from "../api/endpoints";
+import { useAuth } from "../contexts/AuthContext";
 
 interface QuizResult {
+  quiz_number: number;
   score: number;
   topic: string;
   difficulty: string;
@@ -68,25 +69,25 @@ const Dashboard: React.FC = () => {
     const canvas = document.getElementById("generalProgressChart") as HTMLCanvasElement;
     if (!canvas) return;
 
-    // Prepare data for line plot
-    const sortedQuizzes = [...performanceData.recent_quizzes].sort((a, b) => 
-      new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-    );
-
-    const data = sortedQuizzes.map((quiz, index) => ({
-      x: index + 1, // Quiz number
+    // Data is already sorted chronologically from the backend
+    const data = performanceData.recent_quizzes.map(quiz => ({
+      x: quiz.quiz_number, // Use quiz_number from backend
       y: quiz.score,
       topic: quiz.topic,
       difficulty: quiz.difficulty,
       timestamp: new Date(quiz.timestamp).toLocaleDateString()
     }));
 
+    // Debug logging
+    console.log('Dashboard: Recent quizzes data:', performanceData.recent_quizzes);
+    console.log('Dashboard: Mapped chart data:', data);
+
     // Group data by difficulty for multiple lines
     const beginnerData = data.filter(point => point.difficulty.toLowerCase() === 'beginner');
     const intermediateData = data.filter(point => point.difficulty.toLowerCase() === 'intermediate');
     const advancedData = data.filter(point => point.difficulty.toLowerCase() === 'advanced');
 
-    const datasets = [];
+    const datasets: ChartDataset<'line', { x: number; y: number; topic: string; difficulty: string; timestamp: string; }[]>[] = [];
 
     if (beginnerData.length > 0) {
       datasets.push({
@@ -144,7 +145,8 @@ const Dashboard: React.FC = () => {
               display: true,
               text: 'Quiz Number'
             },
-            beginAtZero: true
+            type: 'linear',
+            beginAtZero: false
           },
           y: {
             title: {
@@ -199,24 +201,20 @@ const Dashboard: React.FC = () => {
       const canvas = document.getElementById(`topic-${topic.replace(/\s+/g, '-')}`) as HTMLCanvasElement;
       if (!canvas) return;
 
-      // Sort quizzes by timestamp
-      const sortedQuizzes = [...quizzes].sort((a, b) => 
-        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-      );
+      const sortedQuizzes = [...quizzes].sort((a, b) => a.quiz_number - b.quiz_number);
 
-      const data = sortedQuizzes.map((quiz, index) => ({
-        x: index + 1,
+      const data = sortedQuizzes.map(quiz => ({
+        x: quiz.quiz_number,
         y: quiz.score,
         difficulty: quiz.difficulty,
         timestamp: new Date(quiz.timestamp).toLocaleDateString()
       }));
 
-      // Group by difficulty for multiple lines
       const beginnerData = data.filter(point => point.difficulty.toLowerCase() === 'beginner');
       const intermediateData = data.filter(point => point.difficulty.toLowerCase() === 'intermediate');
       const advancedData = data.filter(point => point.difficulty.toLowerCase() === 'advanced');
 
-      const datasets = [];
+      const datasets: ChartDataset<'line', { x: number; y: number; difficulty: string; timestamp: string; }[]>[] = [];
 
       if (beginnerData.length > 0) {
         datasets.push({
@@ -226,8 +224,8 @@ const Dashboard: React.FC = () => {
           backgroundColor: 'rgba(75, 192, 192, 0.1)',
           fill: false,
           tension: 0.4,
-          pointRadius: 4,
-          pointHoverRadius: 6
+          pointRadius: 5,
+          pointHoverRadius: 7
         });
       }
 
@@ -239,8 +237,8 @@ const Dashboard: React.FC = () => {
           backgroundColor: 'rgba(255, 206, 86, 0.1)',
           fill: false,
           tension: 0.4,
-          pointRadius: 4,
-          pointHoverRadius: 6
+          pointRadius: 5,
+          pointHoverRadius: 7
         });
       }
 
@@ -252,8 +250,8 @@ const Dashboard: React.FC = () => {
           backgroundColor: 'rgba(255, 99, 132, 0.1)',
           fill: false,
           tension: 0.4,
-          pointRadius: 4,
-          pointHoverRadius: 6
+          pointRadius: 5,
+          pointHoverRadius: 7
         });
       }
 
@@ -264,7 +262,6 @@ const Dashboard: React.FC = () => {
         },
         options: {
           responsive: true,
-          maintainAspectRatio: false,
           interaction: {
             intersect: false,
             mode: 'index'
@@ -275,7 +272,8 @@ const Dashboard: React.FC = () => {
                 display: true,
                 text: 'Quiz Number'
               },
-              beginAtZero: true
+              type: 'linear', // Use linear scale for quiz numbers
+              beginAtZero: false
             },
             y: {
               title: {
@@ -292,6 +290,7 @@ const Dashboard: React.FC = () => {
                 label: function(context: any) {
                   const point = context.raw;
                   return [
+                    `Quiz #${point.x}`,
                     `Score: ${point.y}%`,
                     `Difficulty: ${point.difficulty}`,
                     `Date: ${point.timestamp}`
@@ -300,8 +299,15 @@ const Dashboard: React.FC = () => {
               }
             },
             legend: {
-              display: datasets.length > 1,
+              display: true,
               position: 'top'
+            },
+            title: {
+              display: true,
+              text: `${topic} Progress`,
+              font: {
+                size: 16
+              }
             }
           }
         }
@@ -398,16 +404,20 @@ const Dashboard: React.FC = () => {
           {Object.keys(performanceData.topic_performance).length > 0 && (
             <div>
               <h3 className="text-xl font-semibold mb-4">Progress by Topic</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {Object.entries(performanceData.topic_performance).map(([topic, performance]) => (
-                  <div key={topic} className="bg-gray-50 p-4 rounded-lg">
-                    <div className="flex justify-between items-center mb-3">
-                      <h4 className="font-semibold text-lg">{topic}</h4>
-                      <span className="text-sm font-medium text-gray-600">
-                        {performance.correct}/{performance.total} ({performance.percentage}%)
-                      </span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                {performanceData && Object.entries(performanceData.topic_performance).map(([topic, performance]) => (
+                  <div key={topic} className="bg-white p-6 rounded-lg shadow-lg">
+                    <h4 className="text-lg font-semibold mb-2 text-gray-600">{topic}</h4>
+                    <div className="w-full bg-gray-200 rounded-full h-4 mb-2">
+                      <div
+                        className="bg-blue-500 h-4 rounded-full"
+                        style={{ width: `${(performance as TopicPerformance).percentage}%` }}
+                      ></div>
                     </div>
-                    <div style={{ height: '250px' }}>
+                    <p className="text-right text-sm text-gray-600">
+                      {(performance as TopicPerformance).correct}/{(performance as TopicPerformance).total} ({(performance as TopicPerformance).percentage}%)
+                    </p>
+                    <div className="mt-4">
                       <canvas id={`topic-${topic.replace(/\s+/g, '-')}`}></canvas>
                     </div>
                   </div>

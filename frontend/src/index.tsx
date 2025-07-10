@@ -1,7 +1,7 @@
 // frontend/src/index.tsx
 import React from "react";
 import ReactDOM from "react-dom/client";
-import App from "./App.tsx";
+import App from "./App";
 import "./styles/tailwind.css"; //to import tailwind if needed
 
 const rootElement = document.getElementById("root");

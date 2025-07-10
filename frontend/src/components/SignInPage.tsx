@@ -1,9 +1,9 @@
 // frontend/src/components/SignInPage.tsx
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext.tsx';
-import apiClient from '../api/apiClient.ts';
-import { AUTH_SIGNIN_ENDPOINT } from '../api/endpoints.ts';
+import { useAuth } from '../contexts/AuthContext';
+import apiClient from '../api/apiClient';
+import { AUTH_SIGNIN_ENDPOINT } from '../api/endpoints';
 
 const SignInPage: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -41,12 +41,13 @@ const SignInPage: React.FC = () => {
       });
 
       if (response.data.success) {
-        const { session_token, user_id, username: responseUsername, english_level } = response.data.data;
+        const { session_token, user_id, username: responseUsername, english_level, has_completed_first_quiz } = response.data.data;
         
         login(session_token, {
           user_id,
           username: responseUsername,
-          english_level
+          english_level,
+          has_completed_first_quiz
         });
         
         // Redirect to the page they were trying to access, or home

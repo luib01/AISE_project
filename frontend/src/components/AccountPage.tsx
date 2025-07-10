@@ -1,14 +1,14 @@
 // frontend/src/components/AccountPage.tsx
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext.tsx';
+import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import apiClient from '../api/apiClient.ts';
+import apiClient from '../api/apiClient';
 import {
   AUTH_PROFILE_ENDPOINT,
   AUTH_UPDATE_USERNAME_ENDPOINT,
   AUTH_CHANGE_PASSWORD_ENDPOINT,
   AUTH_DELETE_ACCOUNT_ENDPOINT
-} from '../api/endpoints.ts';
+} from '../api/endpoints';
 
 interface ProfileData {
   user_id: string;

@@ -15,7 +15,7 @@ async def get_user_performance(current_user: Dict = Depends(get_current_user)):
     """
     user_id = current_user["user_id"]
     db = get_db()
-    quizzes = db.Quizzes.find({"user_id": user_id}, {"_id": 0})
+    quizzes = db.Quizzes.find({"user_id": user_id}, {"_id": 0}).sort("timestamp", 1)
 
     performance_data = []
     index_counter = 1
@@ -46,9 +46,12 @@ async def get_detailed_user_performance(current_user: Dict = Depends(get_current
         # Get recent quiz history
         db = get_db()
         
-        recent_quizzes = list(db.Quizzes.find(
+        recent_quizzes_desc = list(db.Quizzes.find(
             {"user_id": user_id}
-        ).sort("timestamp", -1).limit(20))  # Increased to 20 for better analysis
+        ).sort("timestamp", -1).limit(20))  # Get latest 20 quizzes
+        
+        # Reverse list to get chronological order for line plot
+        recent_quizzes = list(reversed(recent_quizzes_desc))
         
         # Calculate topic-wise performance
         topic_performance = {}
@@ -70,21 +73,34 @@ async def get_detailed_user_performance(current_user: Dict = Depends(get_current
                     "total": perf["total"]
                 }
         
+        total_quizzes = user_profile.get("total_quizzes", 0)
+        first_quiz_num = (total_quizzes - len(recent_quizzes) + 1) if total_quizzes > 0 else 1
+        
+        # Debug logging
+        print(f"DEBUG Performance: user_id={user_id}, total_quizzes={total_quizzes}, recent_count={len(recent_quizzes)}, first_quiz_num={first_quiz_num}")
+        
+        # Build recent quizzes response
+        recent_quizzes_response = [
+            {
+                "quiz_number": first_quiz_num + i,
+                "score": quiz.get("score", 0),
+                "topic": quiz.get("topic", "Unknown"),
+                "difficulty": quiz.get("difficulty", "beginner"),
+                "timestamp": quiz.get("timestamp")
+            }
+            for i, quiz in enumerate(recent_quizzes)
+        ]
+        
+        # Debug quiz numbers
+        print(f"DEBUG Quiz numbers: {[q['quiz_number'] for q in recent_quizzes_response]}")
+
         return {
             "user_id": user_id,
             "english_level": user_profile.get("english_level", "beginner"),
-            "total_quizzes": user_profile.get("total_quizzes", 0),
+            "total_quizzes": total_quizzes,
             "average_score": user_profile.get("average_score", 0.0),
             "topic_performance": topic_percentages,
-            "recent_quizzes": [
-                {
-                    "score": quiz.get("score", 0),
-                    "topic": quiz.get("topic", "Unknown"),
-                    "difficulty": quiz.get("difficulty", "beginner"),
-                    "timestamp": quiz.get("timestamp")
-                }
-                for quiz in recent_quizzes
-            ],
+            "recent_quizzes": recent_quizzes_response,
             "level_progression": {
                 "current_level": user_profile.get("english_level", "beginner"),
                 "level_changed": user_profile.get("level_changed", False),

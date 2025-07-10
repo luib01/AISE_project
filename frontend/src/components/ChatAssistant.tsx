@@ -1,7 +1,7 @@
 // frontend/src/components/ChatAssistant.tsx
 import React, { useState } from "react";
-import apiClient from "../api/apiClient.ts";
-import { CHAT_ENDPOINT } from "../api/endpoints.ts";
+import apiClient from "../api/apiClient";
+import { CHAT_ENDPOINT } from "../api/endpoints";
 
 interface ChatMessage {
   sender: "user" | "bot";
@@ -10,7 +10,7 @@ interface ChatMessage {
 
 const ChatAssistant: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { sender: "bot", text: "Hello! I'm your English learning assistant. How can I help you improve your English today?" }
+    { sender: "bot", text: "Hello! I'm your AI Teacher. How can I help you improve your English today?" }
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -50,7 +50,7 @@ const ChatAssistant: React.FC = () => {
       // Optionally shows an error message in the conversation
       const errorMsg: ChatMessage = {
         sender: "bot",
-        text: "Sorry, I'm having trouble connecting to the AI service. Please try again.",
+        text: "Sorry, I'm having trouble connecting to the AI Teacher service. Please try again.",
       };
       setMessages([...newMessages, errorMsg]);
     } finally {
@@ -67,7 +67,7 @@ const ChatAssistant: React.FC = () => {
 
   return (
     <div className="bg-white p-6 rounded-lg shadow max-w-3xl mx-auto h-[80vh] flex flex-col">
-      <h2 className="text-2xl font-bold mb-4 text-gray-800">English Learning Assistant</h2>
+      <h2 className="text-2xl font-bold mb-4 text-gray-800">AI Teacher</h2>
       <div className="flex-grow overflow-auto mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
         {messages.map((msg, idx) => (
           <div

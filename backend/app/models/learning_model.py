@@ -25,6 +25,14 @@ def get_user_profile(user_id: str) -> Dict:
                 user_profile["total_quizzes"] = 0
             if "average_score" not in user_profile:
                 user_profile["average_score"] = 0.0
+            if "has_completed_first_quiz" not in user_profile:
+                user_profile["has_completed_first_quiz"] = False
+            if "level_changed" not in user_profile:
+                user_profile["level_changed"] = False
+            if "level_change_type" not in user_profile:
+                user_profile["level_change_type"] = None
+            if "level_change_message" not in user_profile:
+                user_profile["level_change_message"] = None
             
             # Get recent quiz history for adaptive learning
             recent_quizzes = list(db.Quizzes.find(
@@ -171,11 +179,27 @@ def save_quiz_results(user_id: str, quiz_data: dict, score: int, topic: str, dif
         "english_level": new_level
     }
     
+    # Mark first quiz as completed if this is the first quiz
+    if total_quizzes == 1:
+        update_data["has_completed_first_quiz"] = True
+    
     # Add level change notification if level changed
     if new_level != current_level:
         update_data["level_changed"] = True
         update_data["previous_level"] = current_level
         update_data["level_change_date"] = datetime.utcnow()
+        
+        # Determine if it's progression or retrocession
+        level_order = {"beginner": 1, "intermediate": 2, "advanced": 3}
+        current_order = level_order.get(current_level, 1)
+        new_order = level_order.get(new_level, 1)
+        
+        if new_order > current_order:
+            update_data["level_change_type"] = "progression"
+            update_data["level_change_message"] = f"Congratulations! You've progressed from {current_level} to {new_level} level!"
+        else:
+            update_data["level_change_type"] = "retrocession"
+            update_data["level_change_message"] = f"Your level has changed from {current_level} to {new_level}. Keep practicing to improve!"
     
     # Update the users collection (auth users)
     db.users.update_one(

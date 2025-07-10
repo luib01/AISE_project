@@ -1,17 +1,18 @@
 // frontend/src/App.tsx
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { AuthProvider, useAuth } from "./contexts/AuthContext.tsx";
-import Navbar from "./components/Navbar.tsx";
-import Dashboard from "./components/Dashboard.tsx";
-import QuestionAssistant from "./components/QuestionAssistant.tsx";
-import QuizPage from "./components/QuizPage.tsx";
-import AdaptiveQuizPage from "./components/AdaptiveQuizPage.tsx";
-import ChatAssistant from "./components/ChatAssistant.tsx";
-import SignInPage from "./components/SignInPage.tsx";
-import SignUpPage from "./components/SignUpPage.tsx";
-import AccountPage from "./components/AccountPage.tsx";
-import ProtectedRoute from "./components/ProtectedRoute.tsx";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import Navbar from "./components/Navbar";
+import Dashboard from "./components/Dashboard";
+import QuestionAssistant from "./components/QuestionAssistant";
+import QuizPage from "./components/QuizPage";
+import AdaptiveQuizPage from "./components/AdaptiveQuizPage";
+import ChatAssistant from "./components/ChatAssistant";
+import SignInPage from "./components/SignInPage";
+import SignUpPage from "./components/SignUpPage";
+import AccountPage from "./components/AccountPage";
+import ProtectedRoute from "./components/ProtectedRoute";
+import AdaptiveQuizProtectedRoute from "./components/AdaptiveQuizProtectedRoute";
 
 const HomePage: React.FC = () => {
   const { isAuthenticated, user } = useAuth();
@@ -24,29 +25,34 @@ const HomePage: React.FC = () => {
             Welcome back, {user?.username}!
           </h1>
           <p className="max-w-2xl text-lg mb-2">
-            Continue your English learning journey with adaptive quizzes and AI-powered chat assistance!
+            Continue your English learning journey with adaptive quizzes and AI Teacher assistance!
           </p>
           <p className="text-sm mb-6 opacity-90">
             Current Level: <span className="font-semibold capitalize">{user?.english_level}</span>
           </p>
           <div className="space-x-4">
-            <a
-              href="/adaptive-quiz"
-              className="bg-white text-indigo-700 font-semibold px-4 py-2 rounded shadow hover:bg-gray-100 transition duration-200"
-            >
-              Take Adaptive Quiz
-            </a>
-            <a
-              href="/quiz"
-              className="bg-white text-purple-700 font-semibold px-4 py-2 rounded shadow hover:bg-gray-100 transition duration-200"
-            >
-              Static Quiz
-            </a>
+            {user?.has_completed_first_quiz ? (
+              // Show only adaptive quiz for users who have completed their first quiz
+              <a
+                href="/adaptive-quiz"
+                className="bg-white text-indigo-700 font-semibold px-4 py-2 rounded shadow hover:bg-gray-100 transition duration-200"
+              >
+                Take Adaptive Quiz
+              </a>
+            ) : (
+              // Show only static quiz for new users
+              <a
+                href="/quiz"
+                className="bg-white text-purple-700 font-semibold px-4 py-2 rounded shadow hover:bg-gray-100 transition duration-200"
+              >
+                Take Your First Quiz
+              </a>
+            )}
             <a
               href="/chat"
               className="bg-white text-green-700 font-semibold px-4 py-2 rounded shadow hover:bg-gray-100 transition duration-200"
             >
-              Chat with AI
+              AI Teacher
             </a>
             <a
               href="/progress"
@@ -62,7 +68,7 @@ const HomePage: React.FC = () => {
             Welcome to the English Learning Platform
           </h1>
           <p className="max-w-2xl text-lg mb-6">
-            Improve your English with adaptive quizzes, personalized recommendations, and AI-powered chat assistance!
+            Improve your English with adaptive quizzes, personalized recommendations, and AI Teacher assistance!
           </p>
           <div className="space-x-4">
             <a
@@ -99,9 +105,9 @@ const App: React.FC = () => {
               <Route path="/signin" element={<SignInPage />} />
               <Route path="/signup" element={<SignUpPage />} />
               <Route path="/adaptive-quiz" element={
-                <ProtectedRoute>
+                <AdaptiveQuizProtectedRoute>
                   <AdaptiveQuizPage />
-                </ProtectedRoute>
+                </AdaptiveQuizProtectedRoute>
               } />
               <Route path="/quiz" element={
                 <ProtectedRoute>

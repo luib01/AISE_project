@@ -1,11 +1,11 @@
 // frontend/src/components/QuizPage.tsx
 import React, { useState } from "react";
-import { useAuth } from "../contexts/AuthContext.tsx";
-import apiClient from "../api/apiClient.ts";
-import { QUIZ_EVALUATION_ENDPOINT } from "../api/endpoints.ts";
+import { useAuth } from "../contexts/AuthContext";
+import apiClient from "../api/apiClient";
+import { QUIZ_EVALUATION_ENDPOINT } from "../api/endpoints";
 
 const QuizPage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [submitted, setSubmitted] = useState(false);
   const [quizResult, setQuizResult] = useState<any>(null);
   const [detailedResults, setDetailedResults] = useState<any[]>([]);
@@ -86,11 +86,50 @@ const QuizPage: React.FC = () => {
       console.log("Quiz submission:", response.data);
       setQuizResult(response.data);
       setSubmitted(true);
+      
+      // Refresh user data to update has_completed_first_quiz status
+      await refreshUser();
     } catch (err) {
       console.error("Error submitting quiz:", err);
       alert("Failed to submit quiz!");
     }
   };
+
+  // If user has already completed their first quiz, show redirect message
+  if (user?.has_completed_first_quiz) {
+    return (
+      <div className="max-w-2xl mx-auto p-6 bg-blue-50 border border-blue-200 rounded-lg">
+        <h2 className="text-xl font-semibold text-blue-800 mb-4">
+          🎉 Ready for Adaptive Learning!
+        </h2>
+        <p className="text-blue-700 mb-4">
+          Great! You've already completed your initial assessment quiz. 
+          Now it's time to continue your learning journey with our adaptive quiz system 
+          that personalizes questions based on your performance and learning patterns.
+        </p>
+        <div className="space-y-3">
+          <a
+            href="/adaptive-quiz"
+            className="block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition duration-200 text-center"
+          >
+            Take Adaptive Quiz
+          </a>
+          <a
+            href="/progress"
+            className="block bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition duration-200 text-center"
+          >
+            View Your Progress
+          </a>
+          <a
+            href="/chat"
+            className="block bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition duration-200 text-center"
+          >
+            Chat with AI Teacher
+          </a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white p-6 rounded-lg shadow text-gray-800 max-w-2xl mx-auto">
@@ -152,9 +191,23 @@ const QuizPage: React.FC = () => {
             </div>
             
             {quizResult.level_changed && (
-              <div className="mt-4 p-4 bg-yellow-100 text-yellow-800 rounded-lg border border-yellow-300">
-                <p className="font-semibold">🚀 Level Up!</p>
+              <div className={`mt-4 p-4 rounded-lg border ${
+                quizResult.level_change_type === 'retrocession' 
+                  ? 'bg-red-100 text-red-800 border-red-300' 
+                  : 'bg-green-100 text-green-800 border-green-300'
+              }`}>
+                <p className="font-semibold">
+                  {quizResult.level_change_type === 'retrocession' 
+                    ? '� Level Retrocession' 
+                    : '�🚀 Level Progression'
+                  }
+                </p>
                 <p>{quizResult.level_change_message}</p>
+                {quizResult.level_change_type === 'retrocession' && (
+                  <p className="text-sm mt-2 font-medium">
+                    💪 Don't worry! Keep practicing and you'll improve again!
+                  </p>
+                )}
               </div>
             )}
           </div>

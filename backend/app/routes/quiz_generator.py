@@ -103,7 +103,7 @@ async def generate_adaptive_quiz(
         topic_specific_instructions = {
             "Grammar": "Include varied grammar points: verb tenses, articles, prepositions, conditionals, passive voice, word order. Mix question types: fill-in-the-blank, error correction, sentence completion.",
             "Vocabulary": "Cover different aspects: word meanings, synonyms/antonyms, collocations, word formation, context clues. Include various word types: nouns, verbs, adjectives, adverbs.",
-            "Reading": "Provide short passages with comprehension questions: main ideas, specific details, inference, vocabulary in context, author's purpose.",
+            "Reading": "For Reading comprehension, you MUST include a short passage (2-3 paragraphs, 150-250 words) followed by comprehension questions. The passage should be appropriate for the student's level and cover topics like: main ideas, specific details, inference, vocabulary in context, author's purpose. Include the passage text in the 'passage' field for each Reading question.",
             "Usage": "Focus on practical English: common expressions, idioms, formal vs informal language, appropriate register, cultural context.",
             "Mixed": "Combine all areas equally: 1 grammar + 1 vocabulary + 1 reading + 1 usage question to provide comprehensive practice."
         }
@@ -134,10 +134,14 @@ async def generate_adaptive_quiz(
         - Questions should be progressive in difficulty within the {difficulty} level
         - Avoid repetition of concepts from previous questions provided above
         
+        SPECIAL INSTRUCTIONS FOR READING QUESTIONS:
+        If the topic is "Reading", you MUST include a "passage" field in each question containing a short reading passage (150-250 words) appropriate for {difficulty} level students. The passage should be engaging and educational, and all questions should be based on this passage. Include questions about main ideas, specific details, inference, vocabulary in context, or author's purpose.
+        
         Format your response as valid JSON only, with this exact structure:
         {{
             "questions": [
                 {{
+                    "passage": "Include this field ONLY for Reading questions - a 150-250 word passage",
                     "question": "Question text here",
                     "options": ["Option A", "Option B", "Option C", "Option D"],
                     "correct_answer": "Option A",
@@ -148,6 +152,7 @@ async def generate_adaptive_quiz(
                     "question_type": "Type of question (e.g., 'Fill-in-blank', 'Multiple choice', 'Error correction')"
                 }},
                 {{
+                    "passage": "Include this field ONLY for Reading questions - same passage as question 1",
                     "question": "Second question text here",
                     "options": ["Option A", "Option B", "Option C", "Option D"],
                     "correct_answer": "Option B",
@@ -158,6 +163,7 @@ async def generate_adaptive_quiz(
                     "question_type": "Different question type from question 1"
                 }},
                 {{
+                    "passage": "Include this field ONLY for Reading questions - same passage as questions 1 and 2",
                     "question": "Third question text here",
                     "options": ["Option A", "Option B", "Option C", "Option D"],
                     "correct_answer": "Option C",
@@ -168,6 +174,7 @@ async def generate_adaptive_quiz(
                     "question_type": "Different question type from questions 1 and 2"
                 }},
                 {{
+                    "passage": "Include this field ONLY for Reading questions - same passage as questions 1, 2, and 3",
                     "question": "Fourth question text here",
                     "options": ["Option A", "Option B", "Option C", "Option D"],
                     "correct_answer": "Option D",

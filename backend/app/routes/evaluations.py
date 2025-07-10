@@ -89,7 +89,12 @@ async def evaluate_quiz(
         }
         
         if level_changed:
-            response_data["level_change_message"] = f"Congratulations! You've progressed from {current_level} to {new_level} level!"
+            # Get level change type and message from the updated profile
+            level_change_type = updated_profile.get("level_change_type", "progression")
+            level_change_message = updated_profile.get("level_change_message", f"Your level changed from {current_level} to {new_level}")
+            
+            response_data["level_change_type"] = level_change_type
+            response_data["level_change_message"] = level_change_message
             response_data["previous_level"] = current_level
         
         return response_data

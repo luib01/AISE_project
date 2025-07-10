@@ -1,7 +1,7 @@
 // frontend/src/components/ModelSettings.tsx
 import React, { useState, useEffect } from "react";
-import apiClient from "../api/apiClient.ts";
-import { MODEL_INFO_ENDPOINT, CHANGE_MODEL_ENDPOINT, HEALTH_CHECK_ENDPOINT } from "../api/endpoints.ts";
+import apiClient from "../api/apiClient";
+import { MODEL_INFO_ENDPOINT, CHANGE_MODEL_ENDPOINT, HEALTH_CHECK_ENDPOINT } from "../api/endpoints";
 
 interface ModelInfo {
   current_model: string;

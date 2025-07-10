@@ -69,6 +69,9 @@ async def sign_in(request: SignInRequest):
     result = user_model.authenticate_user(request.username, request.password)
     
     if result["success"]:
+        # Get full user profile to include all fields
+        user_profile = user_model.get_user_profile(result["user_id"])
+        
         return AuthResponse(
             success=True,
             message="Signed in successfully",
@@ -76,6 +79,7 @@ async def sign_in(request: SignInRequest):
                 "user_id": result["user_id"],
                 "username": result["username"],
                 "english_level": result["english_level"],
+                "has_completed_first_quiz": user_profile.get("has_completed_first_quiz", False) if user_profile else False,
                 "session_token": result["session_token"]
             }
         )

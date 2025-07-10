@@ -62,7 +62,8 @@ class UserModel:
             "english_level": "beginner",
             "total_quizzes": 0,
             "quiz_history": [],
-            "last_login": None
+            "last_login": None,
+            "has_completed_first_quiz": False  # Track if user has completed initial static quiz
         }
         
         result = self.users_collection.insert_one(user_data)
@@ -128,7 +129,12 @@ class UserModel:
         return {
             "user_id": str(user["_id"]),
             "username": user["username"],
-            "english_level": user.get("english_level", "beginner")
+            "english_level": user.get("english_level", "beginner"),
+            "has_completed_first_quiz": user.get("has_completed_first_quiz", False),
+            "level_changed": user.get("level_changed", False),
+            "level_change_type": user.get("level_change_type", None),
+            "level_change_message": user.get("level_change_message", None),
+            "previous_level": user.get("previous_level", None)
         }
     
     def logout_user(self, session_token: str) -> bool:
@@ -148,6 +154,11 @@ class UserModel:
                 "username": user["username"],
                 "english_level": user.get("english_level", "beginner"),
                 "total_quizzes": user.get("total_quizzes", 0),
+                "has_completed_first_quiz": user.get("has_completed_first_quiz", False),
+                "level_changed": user.get("level_changed", False),
+                "level_change_type": user.get("level_change_type", None),
+                "level_change_message": user.get("level_change_message", None),
+                "previous_level": user.get("previous_level", None),
                 "created_at": user.get("created_at"),
                 "last_login": user.get("last_login")
             }

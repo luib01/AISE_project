@@ -1,12 +1,17 @@
 // frontend/src/contexts/AuthContext.tsx
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import apiClient from '../api/apiClient.ts';
-import { AUTH_VALIDATE_ENDPOINT, AUTH_LOGOUT_ENDPOINT } from '../api/endpoints.ts';
+import apiClient from '../api/apiClient';
+import { AUTH_VALIDATE_ENDPOINT, AUTH_LOGOUT_ENDPOINT } from '../api/endpoints';
 
 interface User {
   user_id: string;
   username: string;
   english_level: string;
+  has_completed_first_quiz?: boolean;
+  level_changed?: boolean;
+  level_change_type?: string;
+  level_change_message?: string;
+  previous_level?: string;
 }
 
 interface AuthContextType {
@@ -16,6 +21,7 @@ interface AuthContextType {
   login: (token: string, userData: User) => void;
   logout: () => Promise<void>;
   updateUser: (userData: Partial<User>) => void;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -97,13 +103,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(prevUser => prevUser ? { ...prevUser, ...userData } : null);
   };
 
+  const refreshUser = async () => {
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      try {
+        const response = await apiClient.get(AUTH_VALIDATE_ENDPOINT, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        
+        if (response.data.success) {
+          setUser(response.data.data);
+        }
+      } catch (error) {
+        console.error('Failed to refresh user data:', error);
+      }
+    }
+  };
+
   const value: AuthContextType = {
     user,
     isAuthenticated: !!user,
     isLoading,
     login,
     logout,
-    updateUser
+    updateUser,
+    refreshUser
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

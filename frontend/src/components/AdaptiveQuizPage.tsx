@@ -1,15 +1,16 @@
 // frontend/src/components/AdaptiveQuizPage.tsx
 import React, { useState, useEffect } from "react";
-import { useAuth } from "../contexts/AuthContext.tsx";
-import apiClient from "../api/apiClient.ts";
+import { useAuth } from "../contexts/AuthContext";
+import apiClient from "../api/apiClient";
 import { 
   ADAPTIVE_QUIZ_ENDPOINT, 
   QUIZ_EVALUATION_ENDPOINT, 
   USER_PROFILE_ENDPOINT,
   QUIZ_TOPICS_ENDPOINT 
-} from "../api/endpoints.ts";
+} from "../api/endpoints";
 
 interface Question {
+  passage?: string;
   question: string;
   options: string[];
   correct_answer: string;
@@ -26,6 +27,8 @@ interface UserProfile {
   average_score: number;
   level_changed?: boolean;
   previous_level?: string;
+  level_change_type?: string;
+  level_change_message?: string;
 }
 
 interface Topic {
@@ -200,8 +203,15 @@ const AdaptiveQuizPage: React.FC = () => {
             </div>
           </div>
           {userProfile.level_changed && (
-            <div className="mt-2 p-2 bg-green-100 text-green-800 rounded text-sm">
-              🎉 Recently progressed from {userProfile.previous_level} to {userProfile.english_level}!
+            <div className={`mt-2 p-2 rounded text-sm ${
+              userProfile.level_change_type === 'retrocession' 
+                ? 'bg-red-100 text-red-800' 
+                : 'bg-green-100 text-green-800'
+            }`}>
+              {userProfile.level_change_type === 'retrocession' 
+                ? '📉 Recently changed from' 
+                : '🎉 Recently progressed from'
+              } {userProfile.previous_level} to {userProfile.english_level}!
             </div>
           )}
         </div>
@@ -252,6 +262,15 @@ const AdaptiveQuizPage: React.FC = () => {
               </h3>
               {questions.map((q, index) => (
                 <div key={index} className="mb-6 p-4 border rounded-lg">
+                  {/* Display reading passage if it exists */}
+                  {q.passage && (
+                    <div className="mb-4 p-3 bg-gray-50 rounded-lg border-l-4 border-blue-500">
+                      <h4 className="font-semibold text-gray-700 mb-2">Reading Passage:</h4>
+                      <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+                        {q.passage}
+                      </p>
+                    </div>
+                  )}
                   <p className="font-medium mb-3">
                     {index + 1}. {q.question}
                   </p>
@@ -300,8 +319,20 @@ const AdaptiveQuizPage: React.FC = () => {
               </span>
             </p>
             {quizResult.level_changed && (
-              <div className="mt-3 p-3 bg-green-100 text-green-800 rounded">
-                🎉 {quizResult.level_change_message}
+              <div className={`mt-3 p-3 rounded ${
+                quizResult.level_change_type === 'retrocession' 
+                  ? 'bg-red-100 text-red-800' 
+                  : 'bg-green-100 text-green-800'
+              }`}>
+                {quizResult.level_change_type === 'retrocession' 
+                  ? '📉' 
+                  : '🎉'
+                } {quizResult.level_change_message}
+                {quizResult.level_change_type === 'retrocession' && (
+                  <div className="text-sm mt-1 font-medium">
+                    💪 Keep practicing to improve your level again!
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -339,6 +370,15 @@ const AdaptiveQuizPage: React.FC = () => {
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
+                    {/* Display reading passage if it exists */}
+                    {result.passage && (
+                      <div className="mb-4 p-3 bg-gray-50 rounded-lg border-l-4 border-blue-500">
+                        <h6 className="font-semibold text-gray-700 mb-2">Reading Passage:</h6>
+                        <p className="text-gray-700 leading-relaxed whitespace-pre-line text-sm">
+                          {result.passage}
+                        </p>
+                      </div>
+                    )}
                     <h5 className="font-medium text-gray-800 mb-2">
                       Question {index + 1}: {result.question}
                     </h5>

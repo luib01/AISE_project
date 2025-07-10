@@ -71,7 +71,7 @@ All quiz and progress features now require authentication:
 - Adaptive Quiz (requires login)
 - Static Quiz (requires login)
 - Progress Dashboard (requires login)
-- Chat AI (requires login)
+- AI Teacher (requires login)
 - Account Settings (requires login)
 
 ## Security Features
@@ -158,7 +158,7 @@ All existing quiz and progress endpoints now require:
 - `/adaptive-quiz` - Adaptive quiz (requires authentication)
 - `/quiz` - Static quiz (requires authentication)
 - `/progress` - Progress dashboard (requires authentication)
-- `/chat` - AI chat assistant (requires authentication)
+- `/chat` - AI Teacher (requires authentication)
 - `/account` - Account management (requires authentication)
 
 ## Docker Commands
@@ -220,6 +220,6 @@ The authentication system is now fully integrated and ready for use. Users can:
 - Access all platform features with personalized experiences
 - Manage their account settings and security
 - View their progress and quiz history
-- Use the AI chat assistant and adaptive quizzes
+- Use the AI Teacher and adaptive quizzes
 
 The system includes comprehensive security measures and user-friendly interfaces for a complete learning platform experience.

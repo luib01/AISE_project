@@ -1,7 +1,7 @@
 // frontend/src/components/Navbar.tsx
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext.tsx";
+import { useAuth } from "../contexts/AuthContext";
 
 const Navbar: React.FC = () => {
   const { isAuthenticated, user, logout } = useAuth();
@@ -28,18 +28,23 @@ const Navbar: React.FC = () => {
             </Link>
             {isAuthenticated && (
               <>
-                <Link
-                  to="/adaptive-quiz"
-                  className="hover:bg-gray-700 px-3 py-2 rounded transition duration-200"
-                >
-                  Adaptive Quiz
-                </Link>
-                <Link
-                  to="/quiz"
-                  className="hover:bg-gray-700 px-3 py-2 rounded transition duration-200"
-                >
-                  Static Quiz
-                </Link>
+                {user?.has_completed_first_quiz ? (
+                  // Show only adaptive quiz for users who completed first quiz
+                  <Link
+                    to="/adaptive-quiz"
+                    className="hover:bg-gray-700 px-3 py-2 rounded transition duration-200"
+                  >
+                    Adaptive Quiz
+                  </Link>
+                ) : (
+                  // Show only static quiz for new users
+                  <Link
+                    to="/quiz"
+                    className="hover:bg-gray-700 px-3 py-2 rounded transition duration-200"
+                  >
+                    Take First Quiz
+                  </Link>
+                )}
                 <Link
                   to="/progress"
                   className="hover:bg-gray-700 px-3 py-2 rounded transition duration-200"
@@ -50,7 +55,7 @@ const Navbar: React.FC = () => {
                   to="/chat"
                   className="hover:bg-gray-700 px-3 py-2 rounded transition duration-200"
                 >
-                  Chat AI
+                  AI Teacher
                 </Link>
               </>
             )}
