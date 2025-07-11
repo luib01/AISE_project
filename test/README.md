@@ -2,6 +2,53 @@
 
 This directory contains all test scripts for the AISE project. Each test verifies specific functionality of the application, providing comprehensive coverage of authentication, quiz systems, AI features, analytics, and more.
 
+## Running Tests
+
+### Using pytest (Recommended)
+
+The test suite now supports pytest for better test discovery, reporting, and integration with IDEs.
+
+#### Install pytest (if not already installed):
+```bash
+pip install pytest pytest-html pytest-cov
+```
+
+#### Run all tests:
+```bash
+# From the test directory
+pytest
+
+# Or run the master test runner with pytest
+python run_all_tests.py --pytest
+
+# Or from project root
+pytest test/
+```
+
+#### Run specific test files:
+```bash
+pytest test_authentication_system.py
+pytest test_quiz_generation.py -v
+```
+
+#### Run with HTML report:
+```bash
+pytest --html=test_report.html --self-contained-html
+```
+
+#### Run with coverage:
+```bash
+pytest --cov=../backend/app --cov-report=html
+```
+
+### Using the Custom Runner (Legacy)
+
+You can still use the custom test runner for detailed reporting:
+
+```bash
+python run_all_tests.py
+```
+
 ## Test Files
 
 ### 🛠️ Master Test Runner

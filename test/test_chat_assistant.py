@@ -1,179 +1,217 @@
 #!/usr/bin/env python3
 """
-Comprehensive test suite for AI Chat Assistant
+Comprehensive pytest test suite for AI Chat Assistant
 Tests: Chat functionality, teacher chat, response formatting, error handling
 """
 
+import pytest
 import requests
 import json
 import time
 import random
+import uuid
+from typing import Dict, List, Optional
 
 # Test configuration
 BACKEND_URL = "http://localhost:8000"
 
-class ChatAssistantTester:
-    def __init__(self):
-        self.test_user = None
-        self.session_token = None
-    
-    def setup_test_user(self):
-        """Create a test user for chat testing"""
-        print("🔧 Setting up test user...")
-        
-        username = f"chat_{random.randint(100, 999)}"
-        password = "ChatTest123"
-        
-        # Register user
-        signup_response = requests.post(f"{BACKEND_URL}/api/auth/signup", 
-                                      json={"username": username, "password": password})
-        
-        if signup_response.status_code == 200:
-            self.test_user = {"username": username, "password": password}
-            print(f"   ✅ Test user created: {username}")
-        else:
-            print(f"   ❌ Failed to create test user: {signup_response.status_code}")
-            return False
-        
+
+@pytest.fixture(scope="session")
+def backend_url():
+    """Fixture to provide backend URL"""
+    return BACKEND_URL
+
+
+@pytest.fixture
+def unique_username():
+    """Generate a unique username for testing"""
+    return f"chat_{uuid.uuid4().hex[:8]}"
+
+
+@pytest.fixture
+def test_user_data(unique_username):
+    """Fixture to provide test user data"""
+    return {
+        "username": unique_username,
+        "password": "ChatTest123"
+    }
+
+
+@pytest.fixture
+def authenticated_chat_user(test_user_data, backend_url):
+    """Fixture that creates and authenticates a user for chat testing"""
+    # Register user
+    signup_response = requests.post(f"{backend_url}/api/auth/signup", json=test_user_data)
+    if signup_response.status_code in [200, 201]:
         # Login user
-        signin_response = requests.post(f"{BACKEND_URL}/api/auth/signin", 
-                                      json={"username": username, "password": password})
-        
+        signin_response = requests.post(f"{backend_url}/api/auth/signin", json=test_user_data)
         if signin_response.status_code == 200:
-            self.session_token = signin_response.json()['data']['session_token']
-            print(f"   ✅ Test user logged in successfully")
-            return True
+            session_token = signin_response.json()['data']['session_token']
+            
+            yield {
+                "user_data": test_user_data,
+                "token": session_token,
+                "headers": {"Authorization": f"Bearer {session_token}"}
+            }
+            
+            # Cleanup: Delete the user after test
+            try:
+                headers = {"Authorization": f"Bearer {session_token}"}
+                requests.delete(f"{backend_url}/api/auth/profile", 
+                              json={"password": test_user_data['password']}, 
+                              headers=headers)
+            except Exception:
+                pass  # Ignore cleanup errors
         else:
-            print(f"   ❌ Failed to login test user: {signin_response.status_code}")
-            return False
-    
-    def cleanup_test_user(self):
-        """Clean up test user"""
-        if self.test_user and self.session_token:
-            print("🧹 Cleaning up test user...")
-            headers = {"Authorization": f"Bearer {self.session_token}"}
-            
-            delete_response = requests.delete(f"{BACKEND_URL}/api/auth/profile", 
-                                            json={"password": self.test_user['password']}, 
-                                            headers=headers)
-            if delete_response.status_code == 200:
-                print("   ✅ Test user cleaned up successfully")
-            else:
-                print(f"   ⚠️ Failed to cleanup test user: {delete_response.status_code}")
-    
-    def test_basic_chat_functionality(self):
-        """Test basic chat functionality"""
-        print("🧪 Testing Basic Chat Functionality...")
+            pytest.fail(f"Failed to authenticate test user: {signin_response.status_code}")
+    else:
+        pytest.fail(f"Failed to register test user: {signup_response.status_code}")
+
+
+@pytest.fixture
+def simple_conversation():
+    """Fixture providing a simple conversation for testing"""
+    return [
+        "Hello, I want to learn English",
+        "Hi! I'm here to help you learn English. What would you like to practice today?"
+    ]
+
+
+@pytest.fixture
+def educational_questions():
+    """Fixture providing educational questions for testing"""
+    return [
+        "What is the difference between 'a' and 'an'?",
+        "How do I use present perfect tense?",
+        "Can you explain irregular verbs?",
+        "What are modal verbs?",
+        "How do I form questions in English?"
+    ]
+
+
+class TestBasicChatFunctionality:
+    """Test class for basic chat functionality"""
+
+    def test_simple_chat_response(self, simple_conversation, backend_url):
+        """Test basic chat functionality with simple conversation"""
+        chat_request = {"conversation": simple_conversation}
+        response = requests.post(f"{backend_url}/api/chat/", json=chat_request)
         
-        # Test simple conversation
-        conversation = [
-            "Hello, I want to learn English",
-            "Hi! I'm here to help you learn English. What would you like to practice today?"
-        ]
-        
-        chat_request = {
-            "conversation": conversation
-        }
-        
-        response = requests.post(f"{BACKEND_URL}/api/chat/", json=chat_request)
-        
-        if response.status_code == 200:
-            result = response.json()
-            reply = result.get("reply", "")
-            
-            if reply and len(reply) > 10:  # Reasonable response length
-                print("   ✅ Basic chat response received")
-                print(f"      Response length: {len(reply)} characters")
-                print(f"      Sample: {reply[:100]}...")
-                return True
-            else:
-                print(f"   ❌ Chat response too short or empty: '{reply}'")
-                return False
-        elif response.status_code == 500:
-            # This might happen if Ollama is not running
+        if response.status_code == 500:
+            # Handle Ollama connection error gracefully
             error_data = response.json()
             if "Ollama connection error" in error_data.get("detail", ""):
-                print("   ⚠️ Ollama not available - chat functionality cannot be tested")
-                print("      This is expected if the AI model is not running")
-                return True  # Don't fail the test for this
+                pytest.skip("Ollama not available - chat functionality cannot be tested")
             else:
-                print(f"   ❌ Chat failed with error: {error_data.get('detail')}")
-                return False
-        else:
-            print(f"   ❌ Chat request failed: {response.status_code}")
-            return False
-    
-    def test_teacher_chat_functionality(self):
-        """Test enhanced teacher chat functionality"""
-        print("🧪 Testing Teacher Chat Functionality...")
+                pytest.fail(f"Chat failed with error: {error_data.get('detail')}")
         
-        # Test different learning focuses and levels
-        test_cases = [
-            {
-                "message": "I want to practice grammar",
-                "user_level": "beginner",
-                "learning_focus": "grammar",
-                "description": "Beginner grammar practice"
-            },
-            {
-                "message": "Help me with vocabulary",
-                "user_level": "intermediate",
-                "learning_focus": "vocabulary",
-                "description": "Intermediate vocabulary help"
-            },
-            {
-                "message": "I need conversation practice",
-                "user_level": "advanced",
-                "learning_focus": "conversation",
-                "description": "Advanced conversation practice"
-            }
-        ]
+        assert response.status_code == 200, f"Chat request failed: {response.status_code} - {response.text}"
         
-        for test_case in test_cases:
-            print(f"   Testing {test_case['description']}...")
-            
-            teacher_request = {
-                "message": test_case["message"],
-                "user_level": test_case["user_level"],
-                "learning_focus": test_case["learning_focus"]
-            }
-            
-            response = requests.post(f"{BACKEND_URL}/api/teacher-chat/", json=teacher_request)
-            
-            if response.status_code == 200:
-                result = response.json()
-                reply = result.get("reply", "")
-                student_level = result.get("student_level")
-                learning_focus = result.get("learning_focus")
-                
-                if reply and len(reply) > 10:
-                    print(f"      ✅ Teacher response received for {test_case['user_level']} {test_case['learning_focus']}")
-                    print(f"         Level: {student_level}, Focus: {learning_focus}")
-                    print(f"         Response length: {len(reply)} characters")
-                else:
-                    print(f"      ❌ Teacher response too short or empty")
-                    return False
-                    
-            elif response.status_code == 500:
-                # Handle Ollama connection error
-                error_data = response.json()
-                if "Ollama connection error" in error_data.get("detail", ""):
-                    print("      ⚠️ Ollama not available - teacher chat cannot be tested")
-                    return True  # Don't fail for Ollama unavailability
-                else:
-                    print(f"      ❌ Teacher chat failed: {error_data.get('detail')}")
-                    return False
+        result = response.json()
+        reply = result.get("reply", "")
+        
+        assert reply, "Chat response should not be empty"
+        assert len(reply) > 10, f"Chat response too short: '{reply}'"
+        assert isinstance(reply, str), "Chat reply should be a string"
+
+    def test_single_message_chat(self, backend_url):
+        """Test chat with single message"""
+        chat_request = {"conversation": ["Hello"]}
+        response = requests.post(f"{backend_url}/api/chat/", json=chat_request)
+        
+        if response.status_code == 500:
+            error_data = response.json()
+            if "Ollama connection error" in error_data.get("detail", ""):
+                pytest.skip("Ollama not available")
             else:
-                print(f"      ❌ Teacher chat request failed: {response.status_code}")
-                return False
+                pytest.fail(f"Chat failed: {error_data.get('detail')}")
         
-        return True
-    
-    def test_chat_conversation_flow(self):
+        assert response.status_code == 200
+        result = response.json()
+        assert result.get("reply"), "Single message should get a reply"
+
+    def test_chat_response_structure(self, simple_conversation, backend_url):
+        """Test that chat response has correct structure"""
+        chat_request = {"conversation": simple_conversation}
+        response = requests.post(f"{backend_url}/api/chat/", json=chat_request)
+        
+        if response.status_code == 500:
+            error_data = response.json()
+            if "Ollama connection error" in error_data.get("detail", ""):
+                pytest.skip("Ollama not available")
+        
+        assert response.status_code == 200
+        result = response.json()
+        
+        assert isinstance(result, dict), "Response should be a dictionary"
+        assert "reply" in result, "Response should contain 'reply' field"
+
+
+class TestTeacherChatFunctionality:
+    """Test class for enhanced teacher chat functionality"""
+
+    @pytest.mark.parametrize("user_level,learning_focus,message", [
+        ("beginner", "grammar", "I want to practice grammar"),
+        ("intermediate", "vocabulary", "Help me with vocabulary"),
+        ("advanced", "conversation", "I need conversation practice"),
+        ("beginner", "pronunciation", "Help me with pronunciation"),
+        ("intermediate", "writing", "I want to improve my writing"),
+    ])
+    def test_teacher_chat_with_different_levels_and_focus(self, user_level, learning_focus, message, backend_url):
+        """Test teacher chat with different user levels and learning focuses"""
+        teacher_request = {
+            "message": message,
+            "user_level": user_level,
+            "learning_focus": learning_focus
+        }
+        
+        response = requests.post(f"{backend_url}/api/teacher-chat/", json=teacher_request)
+        
+        if response.status_code == 500:
+            error_data = response.json()
+            if "Ollama connection error" in error_data.get("detail", ""):
+                pytest.skip("Ollama not available")
+            else:
+                pytest.fail(f"Teacher chat failed: {error_data.get('detail')}")
+        
+        assert response.status_code == 200, f"Teacher chat failed for {user_level} {learning_focus}: {response.status_code}"
+        
+        result = response.json()
+        reply = result.get("reply", "")
+        student_level = result.get("student_level")
+        returned_focus = result.get("learning_focus")
+        
+        assert reply, f"Teacher response should not be empty for {user_level} {learning_focus}"
+        assert len(reply) > 10, f"Teacher response too short for {user_level} {learning_focus}"
+        # Note: student_level and learning_focus might be optional in response
+
+    def test_teacher_chat_response_structure(self, backend_url):
+        """Test teacher chat response structure"""
+        teacher_request = {
+            "message": "Help me learn English",
+            "user_level": "beginner",
+            "learning_focus": "grammar"
+        }
+        
+        response = requests.post(f"{backend_url}/api/teacher-chat/", json=teacher_request)
+        
+        if response.status_code == 500:
+            error_data = response.json()
+            if "Ollama connection error" in error_data.get("detail", ""):
+                pytest.skip("Ollama not available")
+        
+        assert response.status_code == 200
+        result = response.json()
+        
+        assert isinstance(result, dict), "Teacher chat response should be a dictionary"
+        assert "reply" in result, "Teacher chat response should contain 'reply' field"
+
+
+class TestChatConversationFlow:
+    """Test class for multi-turn conversation flow"""
+
+    def test_multi_turn_conversation(self, backend_url):
         """Test multi-turn conversation flow"""
-        print("🧪 Testing Chat Conversation Flow...")
-        
-        # Simulate a multi-turn conversation
         conversations = [
             # First turn
             ["Hello"],
@@ -186,223 +224,313 @@ class ChatAssistantTester:
         ]
         
         for i, conversation in enumerate(conversations):
-            print(f"   Testing conversation turn {i+1}...")
-            
             chat_request = {"conversation": conversation}
-            response = requests.post(f"{BACKEND_URL}/api/chat/", json=chat_request)
+            response = requests.post(f"{backend_url}/api/chat/", json=chat_request)
             
-            if response.status_code == 200:
-                result = response.json()
-                reply = result.get("reply", "")
-                
-                if reply:
-                    print(f"      ✅ Turn {i+1} response received")
-                else:
-                    print(f"      ❌ Turn {i+1} no response")
-                    return False
-                    
-            elif response.status_code == 500:
+            if response.status_code == 500:
                 error_data = response.json()
                 if "Ollama connection error" in error_data.get("detail", ""):
-                    print("      ⚠️ Ollama not available - conversation flow cannot be tested")
-                    return True
+                    pytest.skip("Ollama not available")
                 else:
-                    print(f"      ❌ Turn {i+1} failed: {error_data.get('detail')}")
-                    return False
-            else:
-                print(f"      ❌ Turn {i+1} request failed: {response.status_code}")
-                return False
+                    pytest.fail(f"Turn {i+1} failed: {error_data.get('detail')}")
+            
+            assert response.status_code == 200, f"Turn {i+1} request failed: {response.status_code}"
+            
+            result = response.json()
+            reply = result.get("reply", "")
+            assert reply, f"Turn {i+1} should have a response"
+
+    def test_conversation_context_awareness(self, backend_url):
+        """Test that chat maintains context across conversation turns"""
+        # Start with a topic
+        conversation1 = ["I want to learn about past tense"]
+        response1 = requests.post(f"{backend_url}/api/chat/", json={"conversation": conversation1})
         
-        return True
-    
-    def test_chat_input_validation(self):
-        """Test chat input validation and error handling"""
-        print("🧪 Testing Chat Input Validation...")
+        if response1.status_code == 500:
+            error_data = response1.json()
+            if "Ollama connection error" in error_data.get("detail", ""):
+                pytest.skip("Ollama not available")
         
-        # Test 1: Empty conversation
+        assert response1.status_code == 200
+        reply1 = response1.json().get("reply", "")
+        
+        # Continue the conversation
+        conversation2 = conversation1 + [reply1, "Can you give me examples?"]
+        response2 = requests.post(f"{backend_url}/api/chat/", json={"conversation": conversation2})
+        
+        assert response2.status_code == 200
+        reply2 = response2.json().get("reply", "")
+        assert reply2, "Continuation should have a response"
+
+
+class TestChatInputValidation:
+    """Test class for chat input validation and error handling"""
+
+    def test_empty_conversation(self, backend_url):
+        """Test chat with empty conversation"""
         empty_request = {"conversation": []}
-        response1 = requests.post(f"{BACKEND_URL}/api/chat/", json=empty_request)
+        response = requests.post(f"{backend_url}/api/chat/", json=empty_request)
         
         # Should either handle gracefully or return appropriate error
-        if response1.status_code in [200, 400, 422]:
-            print("   ✅ Empty conversation handled appropriately")
-        else:
-            print(f"   ❌ Empty conversation not handled properly: {response1.status_code}")
-            return False
-        
-        # Test 2: Missing conversation field
+        assert response.status_code in [200, 400, 422], f"Empty conversation not handled properly: {response.status_code}"
+
+    def test_missing_conversation_field(self, backend_url):
+        """Test chat with missing conversation field"""
         invalid_request = {"messages": ["Hello"]}  # Wrong field name
-        response2 = requests.post(f"{BACKEND_URL}/api/chat/", json=invalid_request)
+        response = requests.post(f"{backend_url}/api/chat/", json=invalid_request)
         
-        if response2.status_code == 422:  # Validation error
-            print("   ✅ Invalid request structure properly rejected")
-        else:
-            print(f"   ❌ Invalid request structure not properly handled: {response2.status_code}")
-            return False
-        
-        # Test 3: Very long conversation
+        assert response.status_code == 422, f"Invalid request structure should be rejected with 422, got {response.status_code}"
+
+    def test_very_long_conversation(self, backend_url):
+        """Test chat with very long conversation"""
         long_conversation = ["Hello"] * 100  # Very long conversation
         long_request = {"conversation": long_conversation}
-        response3 = requests.post(f"{BACKEND_URL}/api/chat/", json=long_request)
+        response = requests.post(f"{backend_url}/api/chat/", json=long_request)
         
         # Should handle gracefully (may truncate or process normally)
-        if response3.status_code in [200, 400, 413, 500]:
-            print("   ✅ Long conversation handled appropriately")
-        else:
-            print(f"   ❌ Long conversation not handled properly: {response3.status_code}")
-            return False
+        assert response.status_code in [200, 400, 413, 500], f"Long conversation not handled properly: {response.status_code}"
+
+    @pytest.mark.parametrize("invalid_conversation", [
+        None,  # None value
+        "Hello",  # String instead of list
+        123,  # Number instead of list
+        [123, 456],  # List of numbers instead of strings
+    ])
+    def test_invalid_conversation_types(self, invalid_conversation, backend_url):
+        """Test chat with invalid conversation data types"""
+        invalid_request = {"conversation": invalid_conversation}
+        response = requests.post(f"{backend_url}/api/chat/", json=invalid_request)
         
-        return True
-    
-    def test_teacher_chat_validation(self):
-        """Test teacher chat input validation"""
-        print("🧪 Testing Teacher Chat Validation...")
-        
-        # Test 1: Invalid user level
+        # Should return validation error
+        assert response.status_code in [400, 422], f"Invalid conversation type should be rejected"
+
+
+class TestTeacherChatValidation:
+    """Test class for teacher chat input validation"""
+
+    @pytest.mark.parametrize("invalid_level", [
+        "invalid_level",
+        "expert",
+        "",
+        None,
+        123
+    ])
+    def test_invalid_user_level(self, invalid_level, backend_url):
+        """Test teacher chat with invalid user levels"""
         invalid_level_request = {
             "message": "Help me learn",
-            "user_level": "invalid_level",
+            "user_level": invalid_level,
             "learning_focus": "grammar"
         }
         
-        response1 = requests.post(f"{BACKEND_URL}/api/teacher-chat/", json=invalid_level_request)
+        response = requests.post(f"{backend_url}/api/teacher-chat/", json=invalid_level_request)
         
-        # Should handle gracefully (may default to beginner)
-        if response1.status_code in [200, 400, 422]:
-            print("   ✅ Invalid user level handled appropriately")
-        else:
-            print(f"   ❌ Invalid user level not handled properly: {response1.status_code}")
-            return False
-        
-        # Test 2: Invalid learning focus
+        # Should handle gracefully (may default to beginner) or return validation error
+        assert response.status_code in [200, 400, 422], f"Invalid user level not handled properly: {response.status_code}"
+
+    @pytest.mark.parametrize("invalid_focus", [
+        "invalid_focus",
+        "mathematics",
+        "",
+        None,
+        123
+    ])
+    def test_invalid_learning_focus(self, invalid_focus, backend_url):
+        """Test teacher chat with invalid learning focus"""
         invalid_focus_request = {
             "message": "Help me learn",
             "user_level": "beginner",
-            "learning_focus": "invalid_focus"
+            "learning_focus": invalid_focus
         }
         
-        response2 = requests.post(f"{BACKEND_URL}/api/teacher-chat/", json=invalid_focus_request)
+        response = requests.post(f"{backend_url}/api/teacher-chat/", json=invalid_focus_request)
         
-        if response2.status_code in [200, 400, 422]:
-            print("   ✅ Invalid learning focus handled appropriately")
-        else:
-            print(f"   ❌ Invalid learning focus not handled properly: {response2.status_code}")
-            return False
-        
-        # Test 3: Missing message
+        # Should handle gracefully or return validation error
+        assert response.status_code in [200, 400, 422], f"Invalid learning focus not handled properly: {response.status_code}"
+
+    def test_missing_message(self, backend_url):
+        """Test teacher chat with missing message"""
         missing_message_request = {
             "user_level": "beginner",
             "learning_focus": "grammar"
         }
         
-        response3 = requests.post(f"{BACKEND_URL}/api/teacher-chat/", json=missing_message_request)
+        response = requests.post(f"{backend_url}/api/teacher-chat/", json=missing_message_request)
         
-        if response3.status_code == 422:  # Validation error expected
-            print("   ✅ Missing message properly rejected")
-            return True
-        else:
-            print(f"   ❌ Missing message not properly handled: {response3.status_code}")
-            return False
-    
-    def test_chat_response_quality(self):
-        """Test basic quality checks for chat responses"""
-        print("🧪 Testing Chat Response Quality...")
+        assert response.status_code == 422, f"Missing message should be rejected with 422, got {response.status_code}"
+
+    def test_empty_message(self, backend_url):
+        """Test teacher chat with empty message"""
+        empty_message_request = {
+            "message": "",
+            "user_level": "beginner",
+            "learning_focus": "grammar"
+        }
         
-        # Test educational content
-        educational_questions = [
-            "What is the difference between 'a' and 'an'?",
-            "How do I use present perfect tense?",
-            "Can you explain irregular verbs?"
-        ]
+        response = requests.post(f"{backend_url}/api/teacher-chat/", json=empty_message_request)
         
-        for question in educational_questions:
+        # Should either handle gracefully or return validation error
+        assert response.status_code in [200, 400, 422], f"Empty message not handled properly: {response.status_code}"
+
+
+class TestChatResponseQuality:
+    """Test class for chat response quality checks"""
+
+    def test_educational_content_responses(self, educational_questions, backend_url):
+        """Test responses to educational questions"""
+        for question in educational_questions[:3]:  # Test first 3 to avoid too many API calls
             chat_request = {"conversation": [question]}
-            response = requests.post(f"{BACKEND_URL}/api/chat/", json=chat_request)
+            response = requests.post(f"{backend_url}/api/chat/", json=chat_request)
             
-            if response.status_code == 200:
-                result = response.json()
-                reply = result.get("reply", "")
-                
-                # Basic quality checks
-                if len(reply) < 20:
-                    print(f"   ⚠️ Response too short for: {question[:30]}...")
-                elif "error" in reply.lower() or "sorry" in reply.lower()[:50]:
-                    print(f"   ⚠️ Error response for: {question[:30]}...")
-                else:
-                    print(f"   ✅ Good response for: {question[:30]}...")
-                    
-            elif response.status_code == 500:
+            if response.status_code == 500:
                 error_data = response.json()
                 if "Ollama connection error" in error_data.get("detail", ""):
-                    print("   ⚠️ Ollama not available - response quality cannot be tested")
-                    return True
+                    pytest.skip("Ollama not available")
                 else:
-                    print(f"   ❌ Chat failed for educational question: {error_data.get('detail')}")
-                    return False
-            else:
-                print(f"   ❌ Request failed for educational question: {response.status_code}")
-                return False
-        
-        return True
-    
-    def run_all_tests(self):
-        """Run all chat assistant tests"""
-        print("🚀 Starting Chat Assistant Tests...\n")
-        
-        success_count = 0
-        total_tests = 6
-        
-        try:
-            # Note: Chat doesn't require authentication, but we set up user for consistency
-            if not self.setup_test_user():
-                print("❌ Failed to setup test user. Continuing with chat tests (auth not required).")
-            print()
+                    pytest.fail(f"Chat failed for question '{question}': {error_data.get('detail')}")
             
-            if self.test_basic_chat_functionality():
-                success_count += 1
-            print()
+            assert response.status_code == 200, f"Request failed for question: {question}"
             
-            if self.test_teacher_chat_functionality():
-                success_count += 1
-            print()
+            result = response.json()
+            reply = result.get("reply", "")
             
-            if self.test_chat_conversation_flow():
-                success_count += 1
-            print()
-            
-            if self.test_chat_input_validation():
-                success_count += 1
-            print()
-            
-            if self.test_teacher_chat_validation():
-                success_count += 1
-            print()
-            
-            if self.test_chat_response_quality():
-                success_count += 1
-            print()
-            
-        except Exception as e:
-            print(f"❌ Unexpected error during chat testing: {e}")
-        
-        finally:
-            if self.session_token:
-                self.cleanup_test_user()
-        
-        print(f"\n📊 Chat Assistant Test Results: {success_count}/{total_tests} tests passed")
-        
-        if success_count == total_tests:
-            print("🎉 All chat assistant tests passed!")
-            return True
-        else:
-            print("⚠️ Some chat assistant tests failed. Check the output above for details.")
-            print("💡 Note: Chat tests may fail if Ollama/AI model is not running - this is expected.")
-            return False
+            # Basic quality checks
+            assert len(reply) >= 20, f"Response too short for educational question: {question}"
+            assert reply.strip(), "Response should not be just whitespace"
 
+    def test_response_is_educational(self, backend_url):
+        """Test that responses are educational in nature"""
+        educational_request = "Explain the difference between 'much' and 'many'"
+        chat_request = {"conversation": [educational_request]}
+        response = requests.post(f"{backend_url}/api/chat/", json=chat_request)
+        
+        if response.status_code == 500:
+            error_data = response.json()
+            if "Ollama connection error" in error_data.get("detail", ""):
+                pytest.skip("Ollama not available")
+        
+        assert response.status_code == 200
+        reply = response.json().get("reply", "")
+        
+        # Check that response contains educational content
+        educational_keywords = ["much", "many", "countable", "uncountable", "example", "use"]
+        found_keywords = sum(1 for keyword in educational_keywords if keyword.lower() in reply.lower())
+        
+        assert found_keywords >= 2, f"Response should contain educational content. Reply: {reply[:100]}..."
+
+    def test_response_length_appropriate(self, backend_url):
+        """Test that responses are appropriate length"""
+        test_cases = [
+            ("Hi", 10, 200),  # Short greeting should get short response
+            ("Explain all English grammar rules", 50, 1000),  # Complex question should get longer response
+        ]
+        
+        for message, min_length, max_length in test_cases:
+            chat_request = {"conversation": [message]}
+            response = requests.post(f"{backend_url}/api/chat/", json=chat_request)
+            
+            if response.status_code == 500:
+                error_data = response.json()
+                if "Ollama connection error" in error_data.get("detail", ""):
+                    pytest.skip("Ollama not available")
+            
+            assert response.status_code == 200
+            reply = response.json().get("reply", "")
+            
+            assert len(reply) >= min_length, f"Response too short for '{message}': {len(reply)} < {min_length}"
+            # Note: We might be lenient on max length as AI can be verbose
+
+
+class TestChatIntegration:
+    """Integration tests for chat functionality"""
+
+    @pytest.mark.integration
+    def test_chat_without_authentication(self, backend_url):
+        """Test that chat works without authentication (public endpoint)"""
+        chat_request = {"conversation": ["Hello, how are you?"]}
+        response = requests.post(f"{backend_url}/api/chat/", json=chat_request)
+        
+        if response.status_code == 500:
+            error_data = response.json()
+            if "Ollama connection error" in error_data.get("detail", ""):
+                pytest.skip("Ollama not available")
+        
+        # Chat should work without authentication
+        assert response.status_code == 200, "Chat should work without authentication"
+
+    @pytest.mark.integration  
+    def test_teacher_chat_without_authentication(self, backend_url):
+        """Test that teacher chat works without authentication"""
+        teacher_request = {
+            "message": "Help me learn English",
+            "user_level": "beginner",
+            "learning_focus": "grammar"
+        }
+        
+        response = requests.post(f"{backend_url}/api/teacher-chat/", json=teacher_request)
+        
+        if response.status_code == 500:
+            error_data = response.json()
+            if "Ollama connection error" in error_data.get("detail", ""):
+                pytest.skip("Ollama not available")
+        
+        # Teacher chat should work without authentication
+        assert response.status_code == 200, "Teacher chat should work without authentication"
+
+    @pytest.mark.integration
+    def test_concurrent_chat_requests(self, backend_url):
+        """Test handling of concurrent chat requests"""
+        import threading
+        import time
+        
+        results = []
+        
+        def make_chat_request():
+            chat_request = {"conversation": ["What is English grammar?"]}
+            response = requests.post(f"{backend_url}/api/chat/", json=chat_request)
+            results.append(response.status_code)
+        
+        # Make 3 concurrent requests
+        threads = []
+        for i in range(3):
+            thread = threading.Thread(target=make_chat_request)
+            threads.append(thread)
+            thread.start()
+        
+        # Wait for all threads to complete
+        for thread in threads:
+            thread.join()
+        
+        # Check that most requests succeeded (some might fail due to Ollama limits)
+        success_count = sum(1 for status in results if status == 200)
+        ollama_error_count = sum(1 for status in results if status == 500)
+        
+        # If all failed with 500, likely Ollama issue
+        if ollama_error_count == len(results):
+            pytest.skip("Ollama not available for concurrent testing")
+        
+        assert success_count >= 1, f"At least one concurrent request should succeed. Results: {results}"
+
+
+def test_backend_connectivity(backend_url):
+    """Test that the backend is accessible"""
+    try:
+        response = requests.get(f"{backend_url}/health", timeout=5)
+        assert response.status_code in [200, 404], "Backend should be accessible"
+    except requests.exceptions.ConnectionError:
+        pytest.fail(f"Cannot connect to backend at {backend_url}. Make sure the backend is running.")
+    except requests.exceptions.Timeout:
+        pytest.fail(f"Backend at {backend_url} is not responding.")
+
+
+# Legacy support function for backward compatibility
 def main():
-    """Main test function"""
-    tester = ChatAssistantTester()
-    return tester.run_all_tests()
+    """Legacy main function for backward compatibility"""
+    print("🚀 Running Chat Assistant Tests with pytest...")
+    exit_code = pytest.main([__file__, "-v"])
+    return exit_code == 0
+
 
 if __name__ == "__main__":
-    main()
+    # Run pytest when executed directly
+    pytest.main([__file__, "-v"])

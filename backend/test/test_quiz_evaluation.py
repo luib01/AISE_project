@@ -299,9 +299,20 @@ class QuizEvaluationTester:
         
         headers = {"Authorization": f"Bearer {self.session_token}"}
         
+        # Get current profile to know starting state
+        profile_response = requests.get(f"{BACKEND_URL}/api/auth/profile", headers=headers)
+        if profile_response.status_code != 200:
+            print(f"   ❌ Failed to get initial profile: {profile_response.status_code}")
+            return False
+        
+        initial_profile = profile_response.json()['data']
+        initial_total_quizzes = initial_profile.get('total_quizzes', 0)
+        initial_average = initial_profile.get('average_score', 0)
+        
+        print(f"   Initial state: {initial_total_quizzes} quizzes, average: {initial_average:.1f}%")
+        
         # Submit multiple quizzes and track average
         quiz_scores = [60, 70, 80, 90]
-        expected_average = sum(quiz_scores) / len(quiz_scores)
         
         for i, score in enumerate(quiz_scores):
             quiz_data = self.create_sample_quiz_data(score_percentage=score)
@@ -317,7 +328,11 @@ class QuizEvaluationTester:
                 print(f"   ❌ Failed to submit quiz {i+1}: {response.status_code}")
                 return False
         
-        # Check final average
+        # Check final average - calculate expected average including initial quizzes
+        total_quizzes_now = initial_total_quizzes + len(quiz_scores)
+        expected_average = ((initial_average * initial_total_quizzes) + sum(quiz_scores)) / total_quizzes_now
+        
+        # Get final profile
         final_profile_response = requests.get(f"{BACKEND_URL}/api/auth/profile", headers=headers)
         if final_profile_response.status_code == 200:
             final_average = final_profile_response.json()['data'].get('average_score', 0)

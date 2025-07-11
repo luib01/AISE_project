@@ -202,7 +202,7 @@ def save_quiz_results(user_id: str, quiz_data: dict, score: int, topic: str, dif
             update_data["level_change_message"] = f"Your level has changed from {current_level} to {new_level}. Keep practicing to improve!"
     
     # Update the users collection (auth users)
-    db.users.update_one(
+    update_result = db.users.update_one(
         {"_id": ObjectId(user_id)},
         {"$set": update_data}
     )

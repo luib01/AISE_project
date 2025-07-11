@@ -14,6 +14,7 @@ async def get_user_performance(current_user: Dict = Depends(get_current_user)):
     along with whether they were correct or not, for the bar chart.
     """
     user_id = current_user["user_id"]
+    user_profile = get_user_profile(user_id)
     db = get_db()
     quizzes = db.Quizzes.find({"user_id": user_id}, {"_id": 0}).sort("timestamp", 1)
 
@@ -32,7 +33,12 @@ async def get_user_performance(current_user: Dict = Depends(get_current_user)):
             })
             index_counter += 1
 
-    return {"performance": performance_data}
+    return {
+        "performance": performance_data,
+        "total_quizzes": user_profile.get("total_quizzes", 0),
+        "average_score": user_profile.get("average_score", 0.0),
+        "english_level": user_profile.get("english_level", "beginner")
+    }
 
 @router.get("/user-performance-detailed/")
 async def get_detailed_user_performance(current_user: Dict = Depends(get_current_user)):
@@ -55,22 +61,37 @@ async def get_detailed_user_performance(current_user: Dict = Depends(get_current
         
         # Calculate topic-wise performance
         topic_performance = {}
-        for quiz in recent_quizzes:
-            topic_perf = quiz.get("topic_performance", {})
-            for topic, perf in topic_perf.items():
-                if topic not in topic_performance:
-                    topic_performance[topic] = {"correct": 0, "total": 0}
-                topic_performance[topic]["correct"] += perf["correct"]
-                topic_performance[topic]["total"] += perf["total"]
+        topic_scores = {}  # Track scores by topic for average calculation
         
-        # Convert to percentages
+        for quiz in recent_quizzes:
+            topic = quiz.get("topic", "Unknown")
+            score = quiz.get("score", 0)
+            
+            # Track scores for average calculation
+            if topic not in topic_scores:
+                topic_scores[topic] = []
+            topic_scores[topic].append(score)
+            
+            # Track correct/total questions
+            topic_perf = quiz.get("topic_performance", {})
+            for topic_name, perf in topic_perf.items():
+                if topic_name not in topic_performance:
+                    topic_performance[topic_name] = {"correct": 0, "total": 0}
+                topic_performance[topic_name]["correct"] += perf["correct"]
+                topic_performance[topic_name]["total"] += perf["total"]
+        
+        # Convert to percentages and include average scores
         topic_percentages = {}
         for topic, perf in topic_performance.items():
             if perf["total"] > 0:
+                percentage = round((perf["correct"] / perf["total"]) * 100, 1)
+                average_score = round(sum(topic_scores.get(topic, [0])) / len(topic_scores.get(topic, [1])), 1)
+                
                 topic_percentages[topic] = {
-                    "percentage": round((perf["correct"] / perf["total"]) * 100, 1),
+                    "percentage": percentage,
                     "correct": perf["correct"],
-                    "total": perf["total"]
+                    "total": perf["total"],
+                    "average_score": average_score
                 }
         
         total_quizzes = user_profile.get("total_quizzes", 0)

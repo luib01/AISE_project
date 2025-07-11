@@ -225,10 +225,21 @@ async def generate_adaptive_quiz(
             json_str = generated_text[start_idx:end_idx]
             quiz_data = json.loads(json_str)
             
-            # Validate that we have exactly 4 questions
+            # Validate that we have exactly 4 questions with proper structure
             questions = quiz_data.get("questions", [])
-            if len(questions) != 4:
-                # If not exactly 4, create fallback quiz
+            valid_questions = 0
+            
+            for question in questions:
+                # Check if question has all required fields and 4 options
+                required_fields = ['question', 'options', 'correct_answer', 'explanation', 'topic', 'difficulty']
+                if (all(field in question for field in required_fields) and 
+                    isinstance(question.get('options'), list) and 
+                    len(question.get('options', [])) == 4):
+                    valid_questions += 1
+            
+            if len(questions) != 4 or valid_questions != 4:
+                # If not exactly 4 valid questions, create fallback quiz
+                print(f"DEBUG: AI generated {len(questions)} questions, {valid_questions} valid. Using fallback.")
                 quiz_data = create_adaptive_fallback_quiz(request.topic, difficulty, request.previous_questions, weak_topics)
             
             # Add comprehensive metadata
@@ -482,7 +493,6 @@ def create_adaptive_fallback_quiz(topic: str, difficulty: str, previous_question
                 {
                     "question": "The company decided to _____ their outdated policies.",
                     "options": ["revise", "revive", "reverse", "reveal"],
-                    "content": "All options start with 'rev-' but have different meanings. 'Revise' means to review and make changes.",
                     "correct_answer": "revise",
                     "explanation": "'Revise' means to examine and make corrections or improvements to something.",
                     "topic": "Vocabulary",
@@ -541,6 +551,134 @@ def create_adaptive_fallback_quiz(topic: str, difficulty: str, previous_question
                     "subtopic": "Academic Adjectives",
                     "difficulty": "advanced",
                     "question_type": "Advanced definitions"
+                }
+            ]
+        },
+        "Mixed": {
+            "beginner": [
+                {
+                    "question": "Which sentence is correct?",
+                    "options": ["I am student", "I am a student", "I am the student", "I student"],
+                    "correct_answer": "I am a student",
+                    "explanation": "We use 'a' before singular countable nouns when introducing them for the first time.",
+                    "topic": "Mixed",
+                    "subtopic": "Articles",
+                    "difficulty": "beginner",
+                    "question_type": "Grammar"
+                },
+                {
+                    "question": "What does 'happy' mean?",
+                    "options": ["sad", "angry", "joyful", "tired"],
+                    "correct_answer": "joyful",
+                    "explanation": "'Happy' means feeling pleasure or contentment, which is the same as 'joyful'.",
+                    "topic": "Mixed",
+                    "subtopic": "Basic Emotions",
+                    "difficulty": "beginner",
+                    "question_type": "Vocabulary"
+                },
+                {
+                    "question": "What is the past tense of 'go'?",
+                    "options": ["goed", "went", "gone", "goes"],
+                    "correct_answer": "went",
+                    "explanation": "'Went' is the past tense of the irregular verb 'go'. 'Gone' is the past participle.",
+                    "topic": "Mixed",
+                    "subtopic": "Irregular Verbs",
+                    "difficulty": "beginner",
+                    "question_type": "Grammar"
+                },
+                {
+                    "question": "Choose the opposite of 'big':",
+                    "options": ["large", "huge", "small", "tall"],
+                    "correct_answer": "small",
+                    "explanation": "'Small' is the opposite of 'big'. 'Large' and 'huge' are synonyms of 'big'.",
+                    "topic": "Mixed",
+                    "subtopic": "Size Adjectives",
+                    "difficulty": "beginner",
+                    "question_type": "Vocabulary"
+                }
+            ],
+            "intermediate": [
+                {
+                    "question": "If I _____ you, I would study harder.",
+                    "options": ["am", "was", "were", "be"],
+                    "correct_answer": "were",
+                    "explanation": "In second conditional sentences, we use 'were' for all persons after 'if'.",
+                    "topic": "Mixed",
+                    "subtopic": "Conditionals",
+                    "difficulty": "intermediate",
+                    "question_type": "Grammar"
+                },
+                {
+                    "question": "What does 'procrastinate' mean?",
+                    "options": ["to hurry up", "to delay doing something", "to finish quickly", "to work hard"],
+                    "correct_answer": "to delay doing something",
+                    "explanation": "'Procrastinate' means to postpone or delay doing something, especially out of laziness or habit.",
+                    "topic": "Mixed",
+                    "subtopic": "Academic Vocabulary",
+                    "difficulty": "intermediate",
+                    "question_type": "Vocabulary"
+                },
+                {
+                    "question": "The report _____ by tomorrow morning.",
+                    "options": ["must finish", "must be finished", "must have finished", "must finishing"],
+                    "correct_answer": "must be finished",
+                    "explanation": "We use passive voice (must be + past participle) when the action is done to the subject.",
+                    "topic": "Mixed",
+                    "subtopic": "Passive Voice",
+                    "difficulty": "intermediate",
+                    "question_type": "Grammar"
+                },
+                {
+                    "question": "What does the phrasal verb 'put off' mean?",
+                    "options": ["to wear", "to postpone", "to turn on", "to remove"],
+                    "correct_answer": "to postpone",
+                    "explanation": "'Put off' is a phrasal verb meaning to delay or postpone something until later.",
+                    "topic": "Mixed",
+                    "subtopic": "Phrasal Verbs",
+                    "difficulty": "intermediate",
+                    "question_type": "Vocabulary"
+                }
+            ],
+            "advanced": [
+                {
+                    "question": "Had she studied harder, she _____ the exam.",
+                    "options": ["would pass", "would have passed", "will pass", "had passed"],
+                    "correct_answer": "would have passed",
+                    "explanation": "This is a third conditional with inversion. 'Had she studied' = 'If she had studied', so we need 'would have passed'.",
+                    "topic": "Mixed",
+                    "subtopic": "Advanced Conditionals",
+                    "difficulty": "advanced",
+                    "question_type": "Grammar"
+                },
+                {
+                    "question": "The new policy has been _____ by the committee.",
+                    "options": ["ratified", "justified", "clarified", "nullified"],
+                    "correct_answer": "ratified",
+                    "explanation": "'Ratified' means officially approved or confirmed, which fits the context of policy approval.",
+                    "topic": "Mixed",
+                    "subtopic": "Formal Vocabulary",
+                    "difficulty": "advanced",
+                    "question_type": "Vocabulary"
+                },
+                {
+                    "question": "The committee insisted that he _____ present at the meeting.",
+                    "options": ["is", "was", "be", "will be"],
+                    "correct_answer": "be",
+                    "explanation": "After verbs like 'insist', 'suggest', 'recommend', we use the subjunctive mood (base form of verb).",
+                    "topic": "Mixed",
+                    "subtopic": "Subjunctive Mood",
+                    "difficulty": "advanced",
+                    "question_type": "Grammar"
+                },
+                {
+                    "question": "Her _____ for detail made her an excellent editor.",
+                    "options": ["penchant", "pendant", "repentant", "attendant"],
+                    "correct_answer": "penchant",
+                    "explanation": "'Penchant' means a strong inclination or liking for something. The other words are unrelated.",
+                    "topic": "Mixed",
+                    "subtopic": "Academic Adjectives",
+                    "difficulty": "advanced",
+                    "question_type": "Vocabulary"
                 }
             ]
         }
