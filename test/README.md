@@ -93,12 +93,10 @@ python run_all_tests.py
   - Data consistency and accuracy
   - Dashboard functionality
 
-### ❓ Q&A and Recommendations Tests
-- **`test_question_assistant.py`** - Tests Q&A and recommendation features including:
+### ❓ Q&A Tests
+- **`test_question_assistant.py`** - Tests Q&A functionality including:
   - Question answering functionality
-  - AI-powered recommendations
-  - Resource seeding and management
-  - Sales endpoint functionality
+  - English learning support and assistance
   - Data persistence and retrieval
 
 ### 🔧 Core Functionality Tests
@@ -204,7 +202,7 @@ The master test runner (`run_all_tests.py`) provides:
 - **Real-time Progress**: Live updates as tests execute
 - **Performance Metrics**: Execution time for each test suite
 - **Detailed Results**: Pass/fail status with error details
-- **Failure Analysis**: Specific error information and recommendations
+- **Failure Analysis**: Specific error information and troubleshooting guidance
 - **Success Rates**: Overall system health overview
 
 ### 🧹 Automatic Cleanup
@@ -242,7 +240,7 @@ Tests automatically clean up:
 ✅ Chat assistant functionality  
 ✅ AI Teacher interactions  
 ✅ Question answering  
-✅ Recommendation engine  
+✅ English learning support  
 ✅ Content generation  
 
 ### Analytics (100% Coverage)

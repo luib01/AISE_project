@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Comprehensive pytest test suite for Question Assistant and Recommendations
-Tests: Q&A functionality, resource recommendations, content suggestions, personalization
+Comprehensive pytest test suite for Question Assistant
+Tests: Q&A functionality, educational content generation, response validation
 """
 
 import pytest
@@ -100,29 +100,7 @@ def sample_questions():
     ]
 
 
-@pytest.fixture
-def recommendation_scenarios():
-    """Fixture providing different recommendation scenarios"""
-    return [
-        {
-            "user_id": "test_user_beginner",
-            "weak_topics": ["Grammar", "Vocabulary"],
-            "english_level": "beginner",
-            "description": "Beginner level recommendations"
-        },
-        {
-            "user_id": "test_user_intermediate",
-            "weak_topics": ["Reading", "Writing"],
-            "english_level": "intermediate",
-            "description": "Intermediate level recommendations"
-        },
-        {
-            "user_id": "test_user_advanced",
-            "weak_topics": ["Advanced Grammar", "Idioms"],
-            "english_level": "advanced",
-            "description": "Advanced level recommendations"
-        }
-    ]
+
 
 
 class TestQuestionAssistantBasic:
@@ -363,78 +341,6 @@ class TestQuestionAssistantValidation:
         # Should handle gracefully (might translate or request English)
         assert response.status_code in [200, 400, 500], f"Non-English question not handled: {response.status_code}"
 
-
-
-class TestResourcesSeeding:
-    """Test class for resources seeding functionality"""
-
-    def test_resources_seeding_endpoint(self, backend_url):
-        """Test resources seeding endpoint functionality"""
-        response = requests.post(f"{backend_url}/api/seed-resources/")
-        
-        if response.status_code == 200:
-            result = response.json()
-            
-            assert "message" in result, "Seeding response should contain a message"
-            
-            message = result["message"]
-            assert isinstance(message, str), "Message should be a string"
-            assert len(message) > 0, "Message should not be empty"
-            
-            # Check for seeded count if available
-            if "seeded_count" in result:
-                count = result["seeded_count"]
-                assert isinstance(count, int), "Seeded count should be an integer"
-                assert count >= 0, "Seeded count should be non-negative"
-                
-        elif response.status_code == 409:
-            # Resources already exist - this is acceptable
-            result = response.json()
-            assert "message" in result or "detail" in result, "409 response should have message or detail"
-            
-        elif response.status_code in [401, 403]:
-            # Might require authentication or admin privileges
-            pytest.skip("Resources seeding requires special privileges")
-            
-        elif response.status_code == 404:
-            # Endpoint might not be implemented
-            pytest.skip("Resources seeding endpoint not implemented")
-            
-        else:
-            pytest.fail(f"Resources seeding failed: {response.status_code} - {response.text}")
-
-    def test_resources_seeding_idempotency(self, backend_url):
-        """Test that resources seeding is idempotent"""
-        # First seeding
-        response1 = requests.post(f"{backend_url}/api/seed-resources/")
-        
-        if response1.status_code in [200, 409]:
-            # Second seeding
-            response2 = requests.post(f"{backend_url}/api/seed-resources/")
-            
-            # Should handle duplicate seeding gracefully
-            assert response2.status_code in [200, 409], f"Second seeding should be handled gracefully: {response2.status_code}"
-            
-            if response1.status_code == 200 and response2.status_code == 409:
-                # First succeeded, second detected duplicates - good
-                pass
-            elif response1.status_code == 409 and response2.status_code == 409:
-                # Both detected existing resources - good
-                pass
-            elif response1.status_code == 200 and response2.status_code == 200:
-                # Both succeeded - check if they're truly idempotent
-                result1 = response1.json()
-                result2 = response2.json()
-                
-                # Messages might be different but both should be successful
-                assert "message" in result1, "First seeding should have message"
-                assert "message" in result2, "Second seeding should have message"
-                
-        elif response1.status_code in [401, 403, 404]:
-            pytest.skip(f"Resources seeding not accessible: {response1.status_code}")
-
-
-class TestSalesEndpoint:
     """Test class for sales/resources endpoint functionality"""
 
     def test_sales_endpoint_accessibility(self, backend_url):
@@ -592,15 +498,11 @@ def test_backend_connectivity(backend_url):
 # Legacy support function for backward compatibility
 def main():
     """Legacy main function for backward compatibility"""
-    print("🚀 Running Question Assistant & Recommendations Tests with pytest...")
+    print("🚀 Running Question Assistant Tests with pytest...")
     print("=" * 60)
     print("\n📋 Test Coverage:")
     print("   • Basic Q&A functionality")
     print("   • Input validation and error handling")
-    print("   • Content recommendations")
-    print("   • Personalization and filtering")
-    print("   • Resources seeding")
-    print("   • Sales/resources endpoints")
     print("   • Question-answer persistence")
     print("   • Authentication and security")
     print("\n💡 Note: Some tests may be skipped if external Q&A services are not configured.")

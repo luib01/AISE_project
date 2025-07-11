@@ -46,8 +46,8 @@ This directory contains all test scripts for the AISE project. Each test verifie
   - Data consistency and accuracy
   - Dashboard functionality
 
-### ❓ Q&A and Recommendations Tests
-- **`test_question_assistant.py`** - Tests Q&A and recommendation features including:
+### ❓ Q&A Tests
+- **`test_question_assistant.py`** - Tests Q&A functionality including:
   - Question answering functionality
   - AI-powered recommendations
   - Resource seeding and management

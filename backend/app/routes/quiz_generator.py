@@ -109,7 +109,7 @@ async def generate_adaptive_quiz(
             "Vocabulary": "Cover different aspects: word meanings, synonyms/antonyms, collocations, word formation, context clues. Include various word types: nouns, verbs, adjectives, adverbs.",
             "Reading": "For Reading comprehension, you MUST include a short passage (2-3 paragraphs, 150-250 words) followed by comprehension questions. The passage should be appropriate for the student's level and cover topics like: main ideas, specific details, inference, vocabulary in context, author's purpose. Include the passage text in the 'passage' field for each Reading question.",
             "Usage": "Focus on practical English: common expressions, idioms, formal vs informal language, appropriate register, cultural context.",
-            "Mixed": "Combine all areas equally: 1 grammar + 1 vocabulary + 1 reading + 1 usage question to provide comprehensive practice."
+            "Mixed": "Create exactly 4 questions covering different English skills: Question 1 should be Grammar-focused, Question 2 should be Vocabulary-focused, Question 3 should be Reading comprehension (with a short passage), and Question 4 should be Usage-focused. This ensures comprehensive practice across all major English learning areas."
         }
         
         topic_instruction = topic_specific_instructions.get(request.topic, "Create diverse questions appropriate for English learners.")
@@ -144,6 +144,14 @@ async def generate_adaptive_quiz(
         SPECIAL INSTRUCTIONS FOR READING QUESTIONS:
         If the topic is "Reading", you MUST include a "passage" field in each question containing a short reading passage (150-250 words) appropriate for {difficulty} level students. The passage should be engaging and educational, and all questions should be based on this passage. Include questions about main ideas, specific details, inference, vocabulary in context, or author's purpose.
         
+        SPECIAL INSTRUCTIONS FOR MIXED TOPIC:
+        If the topic is "Mixed", create exactly 4 questions with different focuses:
+        - Question 1: Grammar-focused (verb tenses, articles, conditionals, etc.)
+        - Question 2: Vocabulary-focused (word meanings, synonyms, collocations, etc.)
+        - Question 3: Reading comprehension (include a "passage" field with 150-250 words and base the question on this passage)
+        - Question 4: Usage-focused (expressions, idioms, formal/informal language, etc.)
+        This ensures balanced coverage of all English learning areas.
+        
         CRITICAL VALIDATION RULE:
         The "correct_answer" field MUST contain the EXACT same text as one of the four options in the "options" array. 
         Do NOT paraphrase, abbreviate, or modify the correct answer text. 
@@ -153,18 +161,18 @@ async def generate_adaptive_quiz(
         {{
             "questions": [
                 {{
-                    "passage": "Include this field ONLY for Reading questions - a 150-250 word passage",
+                    "passage": "Include this field ONLY for Reading questions or Question 3 in Mixed topics - a 150-250 word passage",
                     "question": "Question text here",
                     "options": ["Option A", "Option B", "Option C", "Option D"],
                     "correct_answer": "Option A",
                     "explanation": "Clear explanation of why this is correct and why other options are wrong",
                     "topic": "{request.topic}",
-                    "subtopic": "Specific subtopic (e.g., 'Present Perfect', 'Synonyms', etc.)",
+                    "subtopic": "Specific subtopic (e.g., 'Present Perfect', 'Synonyms', 'Main Ideas', 'Idioms')",
                     "difficulty": "{difficulty}",
                     "question_type": "Type of question (e.g., 'Fill-in-blank', 'Multiple choice', 'Error correction')"
                 }},
                 {{
-                    "passage": "Include this field ONLY for Reading questions - same passage as question 1",
+                    "passage": "Include this field ONLY for Reading questions or Question 3 in Mixed topics",
                     "question": "Second question text here",
                     "options": ["Option A", "Option B", "Option C", "Option D"],
                     "correct_answer": "Option B",
@@ -175,7 +183,7 @@ async def generate_adaptive_quiz(
                     "question_type": "Different question type from question 1"
                 }},
                 {{
-                    "passage": "Include this field ONLY for Reading questions - same passage as questions 1 and 2",
+                    "passage": "For Mixed topics: include passage here for the Reading question (Question 3). For Reading topic: same passage as questions 1 and 2",
                     "question": "Third question text here",
                     "options": ["Option A", "Option B", "Option C", "Option D"],
                     "correct_answer": "Option C",
@@ -186,7 +194,7 @@ async def generate_adaptive_quiz(
                     "question_type": "Different question type from questions 1 and 2"
                 }},
                 {{
-                    "passage": "Include this field ONLY for Reading questions - same passage as questions 1, 2, and 3",
+                    "passage": "Include this field ONLY for Reading questions. For Mixed topics, Question 4 should NOT have a passage",
                     "question": "Fourth question text here",
                     "options": ["Option A", "Option B", "Option C", "Option D"],
                     "correct_answer": "Option D",
@@ -200,7 +208,10 @@ async def generate_adaptive_quiz(
         }}
         
         CRITICAL: You MUST generate exactly 4 questions. Each question must be unique and cover different aspects of {request.topic}.
-        Ensure maximum variety while staying within the {request.topic} topic and {difficulty} difficulty level.
+        
+        For Mixed topics: Question 1 = Grammar, Question 2 = Vocabulary, Question 3 = Reading (with passage), Question 4 = Usage.
+        For Reading topics: All 4 questions based on the same reading passage.
+        For other topics: Ensure maximum variety while staying within the {request.topic} topic and {difficulty} difficulty level.
         
         FINAL REMINDER: Double-check that each "correct_answer" is EXACTLY the same text as one of the four options in the "options" array.
         """
@@ -573,6 +584,146 @@ def create_adaptive_fallback_quiz(topic: str, difficulty: str, previous_question
                     "subtopic": "Academic Adjectives",
                     "difficulty": "advanced",
                     "question_type": "Advanced definitions"
+                }
+            ]
+        },
+        "Reading": {
+            "beginner": [
+                {
+                    "passage": "Sam lives near a big park. Every day, he goes to the park and plays football with his friends. Sam also has a small dog named Max. Max is very friendly and loves to run around the park. After playing football, Sam and his friends sit under a tree and eat sandwiches. Max sits with them and waits for some food. Sam always gives Max a small piece of his sandwich because he loves his dog very much.",
+                    "question": "What does Sam do every day?",
+                    "options": ["He goes to school", "He plays football in the park", "He stays at home", "He walks his dog"],
+                    "correct_answer": "He plays football in the park",
+                    "explanation": "According to the passage, 'Every day, he goes to the park and plays football with his friends.'",
+                    "topic": "Reading",
+                    "subtopic": "Main Ideas",
+                    "difficulty": "beginner",
+                    "question_type": "Reading comprehension"
+                },
+                {
+                    "passage": "Sam lives near a big park. Every day, he goes to the park and plays football with his friends. Sam also has a small dog named Max. Max is very friendly and loves to run around the park. After playing football, Sam and his friends sit under a tree and eat sandwiches. Max sits with them and waits for some food. Sam always gives Max a small piece of his sandwich because he loves his dog very much.",
+                    "question": "What kind of animal is Max?",
+                    "options": ["A cat", "A bird", "A dog", "A rabbit"],
+                    "correct_answer": "A dog",
+                    "explanation": "The passage clearly states 'Sam also has a small dog named Max.'",
+                    "topic": "Reading",
+                    "subtopic": "Specific Details",
+                    "difficulty": "beginner",
+                    "question_type": "Reading comprehension"
+                },
+                {
+                    "passage": "Sam lives near a big park. Every day, he goes to the park and plays football with his friends. Sam also has a small dog named Max. Max is very friendly and loves to run around the park. After playing football, Sam and his friends sit under a tree and eat sandwiches. Max sits with them and waits for some food. Sam always gives Max a small piece of his sandwich because he loves his dog very much.",
+                    "question": "Why does Sam give Max food?",
+                    "options": ["Because Max is hungry", "Because he loves his dog", "Because Max asks for it", "Because his friends tell him to"],
+                    "correct_answer": "Because he loves his dog",
+                    "explanation": "The passage ends with 'Sam always gives Max a small piece of his sandwich because he loves his dog very much.'",
+                    "topic": "Reading",
+                    "subtopic": "Inference",
+                    "difficulty": "beginner",
+                    "question_type": "Reading comprehension"
+                },
+                {
+                    "passage": "Sam lives near a big park. Every day, he goes to the park and plays football with his friends. Sam also has a small dog named Max. Max is very friendly and loves to run around the park. After playing football, Sam and his friends sit under a tree and eat sandwiches. Max sits with them and waits for some food. Sam always gives Max a small piece of his sandwich because he loves his dog very much.",
+                    "question": "Where do Sam and his friends eat their sandwiches?",
+                    "options": ["At home", "In the school", "Under a tree", "In a restaurant"],
+                    "correct_answer": "Under a tree",
+                    "explanation": "The passage states 'Sam and his friends sit under a tree and eat sandwiches.'",
+                    "topic": "Reading",
+                    "subtopic": "Specific Details",
+                    "difficulty": "beginner",
+                    "question_type": "Reading comprehension"
+                }
+            ],
+            "intermediate": [
+                {
+                    "passage": "Working from home has become increasingly popular in recent years, especially after the global pandemic. Many employees have discovered that they can be just as productive, if not more so, when working from their own homes. This shift has brought both advantages and challenges. On the positive side, workers save time and money on commuting, have more flexibility in their schedules, and often report better work-life balance. However, some people struggle with distractions at home, miss the social interaction with colleagues, and find it difficult to separate work from personal life when both happen in the same space.",
+                    "question": "What is the main topic of this passage?",
+                    "options": ["The pandemic's effects", "Working from home", "Commuting problems", "Social interaction"],
+                    "correct_answer": "Working from home",
+                    "explanation": "The passage focuses on working from home, discussing its popularity, advantages, and challenges.",
+                    "topic": "Reading",
+                    "subtopic": "Main Ideas",
+                    "difficulty": "intermediate",
+                    "question_type": "Reading comprehension"
+                },
+                {
+                    "passage": "Working from home has become increasingly popular in recent years, especially after the global pandemic. Many employees have discovered that they can be just as productive, if not more so, when working from their own homes. This shift has brought both advantages and challenges. On the positive side, workers save time and money on commuting, have more flexibility in their schedules, and often report better work-life balance. However, some people struggle with distractions at home, miss the social interaction with colleagues, and find it difficult to separate work from personal life when both happen in the same space.",
+                    "question": "According to the passage, what do workers save when working from home?",
+                    "options": ["Energy and effort", "Time and money", "Space and resources", "Health and wellness"],
+                    "correct_answer": "Time and money",
+                    "explanation": "The passage specifically mentions 'workers save time and money on commuting.'",
+                    "topic": "Reading",
+                    "subtopic": "Specific Details",
+                    "difficulty": "intermediate",
+                    "question_type": "Reading comprehension"
+                },
+                {
+                    "passage": "Working from home has become increasingly popular in recent years, especially after the global pandemic. Many employees have discovered that they can be just as productive, if not more so, when working from their own homes. This shift has brought both advantages and challenges. On the positive side, workers save time and money on commuting, have more flexibility in their schedules, and often report better work-life balance. However, some people struggle with distractions at home, miss the social interaction with colleagues, and find it difficult to separate work from personal life when both happen in the same space.",
+                    "question": "What can be inferred about productivity when working from home?",
+                    "options": ["It always decreases", "It can be equal or better", "It depends on the job", "It's impossible to measure"],
+                    "correct_answer": "It can be equal or better",
+                    "explanation": "The passage states that employees 'can be just as productive, if not more so' when working from home.",
+                    "topic": "Reading",
+                    "subtopic": "Inference",
+                    "difficulty": "intermediate",
+                    "question_type": "Reading comprehension"
+                },
+                {
+                    "passage": "Working from home has become increasingly popular in recent years, especially after the global pandemic. Many employees have discovered that they can be just as productive, if not more so, when working from their own homes. This shift has brought both advantages and challenges. On the positive side, workers save time and money on commuting, have more flexibility in their schedules, and often report better work-life balance. However, some people struggle with distractions at home, miss the social interaction with colleagues, and find it difficult to separate work from personal life when both happen in the same space.",
+                    "question": "What challenge is mentioned regarding working from home?",
+                    "options": ["Higher costs", "Less productivity", "Difficulty separating work and personal life", "More commuting time"],
+                    "correct_answer": "Difficulty separating work and personal life",
+                    "explanation": "The passage mentions people 'find it difficult to separate work from personal life when both happen in the same space.'",
+                    "topic": "Reading",
+                    "subtopic": "Specific Details",
+                    "difficulty": "intermediate",
+                    "question_type": "Reading comprehension"
+                }
+            ],
+            "advanced": [
+                {
+                    "passage": "The concept of artificial intelligence has evolved dramatically since its inception in the 1950s. Initially conceived as a means to replicate human cognitive processes, AI has transcended its original boundaries to encompass machine learning, neural networks, and deep learning algorithms. Contemporary AI systems demonstrate remarkable capabilities in pattern recognition, natural language processing, and decision-making processes that were once considered exclusively human domains. However, this rapid advancement has precipitated significant ethical debates regarding privacy, employment displacement, and the potential for autonomous systems to make consequential decisions without human oversight. As we stand at the precipice of an AI-driven future, society must grapple with balancing technological innovation with responsible implementation and regulation.",
+                    "question": "What is the author's primary purpose in this passage?",
+                    "options": ["To advocate for AI development", "To trace AI's evolution and current challenges", "To criticize artificial intelligence", "To predict future AI capabilities"],
+                    "correct_answer": "To trace AI's evolution and current challenges",
+                    "explanation": "The passage discusses AI's development from the 1950s to present and addresses current ethical debates and challenges.",
+                    "topic": "Reading",
+                    "subtopic": "Author's Purpose",
+                    "difficulty": "advanced",
+                    "question_type": "Reading comprehension"
+                },
+                {
+                    "passage": "The concept of artificial intelligence has evolved dramatically since its inception in the 1950s. Initially conceived as a means to replicate human cognitive processes, AI has transcended its original boundaries to encompass machine learning, neural networks, and deep learning algorithms. Contemporary AI systems demonstrate remarkable capabilities in pattern recognition, natural language processing, and decision-making processes that were once considered exclusively human domains. However, this rapid advancement has precipitated significant ethical debates regarding privacy, employment displacement, and the potential for autonomous systems to make consequential decisions without human oversight. As we stand at the precipice of an AI-driven future, society must grapple with balancing technological innovation with responsible implementation and regulation.",
+                    "question": "What does 'precipitated' most likely mean in this context?",
+                    "options": ["Prevented", "Caused or brought about", "Delayed", "Ignored"],
+                    "correct_answer": "Caused or brought about",
+                    "explanation": "'Precipitated' in this context means caused or triggered, referring to how AI advancement has brought about ethical debates.",
+                    "topic": "Reading",
+                    "subtopic": "Vocabulary in Context",
+                    "difficulty": "advanced",
+                    "question_type": "Reading comprehension"
+                },
+                {
+                    "passage": "The concept of artificial intelligence has evolved dramatically since its inception in the 1950s. Initially conceived as a means to replicate human cognitive processes, AI has transcended its original boundaries to encompass machine learning, neural networks, and deep learning algorithms. Contemporary AI systems demonstrate remarkable capabilities in pattern recognition, natural language processing, and decision-making processes that were once considered exclusively human domains. However, this rapid advancement has precipitated significant ethical debates regarding privacy, employment displacement, and the potential for autonomous systems to make consequential decisions without human oversight. As we stand at the precipice of an AI-driven future, society must grapple with balancing technological innovation with responsible implementation and regulation.",
+                    "question": "Which of the following can be inferred about the author's perspective on AI development?",
+                    "options": ["Completely optimistic", "Entirely pessimistic", "Cautiously balanced", "Completely neutral"],
+                    "correct_answer": "Cautiously balanced",
+                    "explanation": "The author acknowledges AI's remarkable capabilities while also emphasizing the need for responsible implementation and addressing ethical concerns.",
+                    "topic": "Reading",
+                    "subtopic": "Inference",
+                    "difficulty": "advanced",
+                    "question_type": "Reading comprehension"
+                },
+                {
+                    "passage": "The concept of artificial intelligence has evolved dramatically since its inception in the 1950s. Initially conceived as a means to replicate human cognitive processes, AI has transcended its original boundaries to encompass machine learning, neural networks, and deep learning algorithms. Contemporary AI systems demonstrate remarkable capabilities in pattern recognition, natural language processing, and decision-making processes that were once considered exclusively human domains. However, this rapid advancement has precipitated significant ethical debates regarding privacy, employment displacement, and the potential for autonomous systems to make consequential decisions without human oversight. As we stand at the precipice of an AI-driven future, society must grapple with balancing technological innovation with responsible implementation and regulation.",
+                    "question": "What metaphor does the author use to describe our current position regarding AI?",
+                    "options": ["Standing at a crossroads", "Standing at the precipice", "Climbing a mountain", "Swimming in deep waters"],
+                    "correct_answer": "Standing at the precipice",
+                    "explanation": "The author uses the metaphor 'at the precipice of an AI-driven future' to describe our current position.",
+                    "topic": "Reading",
+                    "subtopic": "Literary Devices",
+                    "difficulty": "advanced",
+                    "question_type": "Reading comprehension"
                 }
             ]
         },

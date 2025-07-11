@@ -126,14 +126,6 @@ def calculate_adaptive_level(user_id: str, quiz_score: int, topic_performance: D
     
     return current_level
 
-def save_recommendations(user_id: str, recommendations: list) -> None:
-    """Save recommendations to 'Recommendations' collection."""
-    db.Recommendations.insert_one({
-        "user_id": user_id,
-        "recommendations": recommendations,
-        "timestamp": datetime.utcnow()
-    })
-
 def save_quiz_results(user_id: str, quiz_data: dict, score: int, topic: str, difficulty: str) -> None:
     """Save the user's quiz results with enhanced tracking."""
     

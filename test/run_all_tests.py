@@ -51,7 +51,7 @@ TEST_MODULES = [
     {
         "name": "Question Assistant",
         "pattern": "test_question_assistant.py",
-        "description": "Q&A functionality, recommendations"
+        "description": "Q&A functionality and English learning support"
     },
     {
         "name": "First Quiz Flag",
@@ -199,8 +199,8 @@ class TestSuiteRunner:
                     print(f"    Issue: Test execution failed - check individual test output")
             print()
             
-            # Recommendations
-            print("💡 RECOMMENDATIONS:")
+            # Setup and Troubleshooting
+            print("💡 SETUP AND TROUBLESHOOTING:")
             print("   1. Check that backend and frontend services are running")
             print("   2. Verify MongoDB is accessible")
             print("   3. Ensure Ollama/AI model is running (for chat tests)")
@@ -286,7 +286,7 @@ class TestAISEProject:
         success, _, error = test_runner.run_individual_test(
             "test_question_assistant.py",
             "Question Assistant",
-            "Q&A functionality, recommendations"
+            "Q&A functionality and English learning support"
         )
         assert success, f"Question assistant tests failed: {error}"
     

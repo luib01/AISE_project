@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Comprehensive test suite for Question Assistant and Recommendations
-Tests: Q&A functionality, resource recommendations, content suggestions
+Comprehensive test suite for Question Assistant
+Tests: Q&A functionality, educational content generation, response validation
 """
 
 import requests
@@ -167,170 +167,6 @@ class QuestionAssistantTester:
             print(f"   ❌ Long question not properly handled: {response4.status_code}")
             return False
     
-    def test_recommendations_endpoint(self):
-        """Test content recommendations functionality"""
-        print("🧪 Testing Recommendations Endpoint...")
-        
-        if not self.session_token:
-            print("   ❌ No authenticated user for recommendations testing")
-            return False
-        
-        headers = {"Authorization": f"Bearer {self.session_token}"}
-        
-        # Test basic recommendations request
-        recommendation_request = {
-            "user_id": "test_user",
-            "weak_topics": ["Grammar", "Vocabulary"],
-            "english_level": "beginner"
-        }
-        
-        response = requests.post(f"{BACKEND_URL}/api/recommend-content/", 
-                               json=recommendation_request, headers=headers)
-        
-        if response.status_code == 200:
-            result = response.json()
-            
-            if "recommendations" in result:
-                recommendations = result["recommendations"]
-                print(f"   ✅ Recommendations retrieved: {len(recommendations)} items")
-                
-                # Validate recommendation structure
-                if recommendations:
-                    first_rec = recommendations[0]
-                    expected_fields = ["title", "topic", "url"]  # Basic expected fields
-                    
-                    missing_fields = [field for field in expected_fields if field not in first_rec]
-                    
-                    if not missing_fields:
-                        print("      ✅ Recommendations have valid structure")
-                        
-                        # Show sample recommendations
-                        for i, rec in enumerate(recommendations[:3]):
-                            print(f"         {i+1}. {rec.get('title', 'No title')} ({rec.get('topic', 'No topic')})")
-                        
-                        return True
-                    else:
-                        print(f"      ❌ Recommendations missing fields: {missing_fields}")
-                        return False
-                else:
-                    print("   ⚠️ Empty recommendations (might be expected)")
-                    return True
-            else:
-                print("   ❌ No recommendations field in response")
-                return False
-        else:
-            print(f"   ❌ Recommendations request failed: {response.status_code}")
-            return False
-    
-    def test_recommendations_personalization(self):
-        """Test that recommendations are personalized based on user data"""
-        print("🧪 Testing Recommendations Personalization...")
-        
-        if not self.session_token:
-            print("   ❌ No authenticated user for personalization testing")
-            return False
-        
-        headers = {"Authorization": f"Bearer {self.session_token}"}
-        
-        # Test recommendations for different levels
-        test_levels = ["beginner", "intermediate", "advanced"]
-        
-        for level in test_levels:
-            print(f"   Testing {level} level recommendations...")
-            
-            recommendation_request = {
-                "user_id": "test_user",
-                "weak_topics": ["Grammar"],
-                "english_level": level
-            }
-            
-            response = requests.post(f"{BACKEND_URL}/api/recommend-content/", 
-                                   json=recommendation_request, headers=headers)
-            
-            if response.status_code == 200:
-                result = response.json()
-                recommendations = result.get("recommendations", [])
-                
-                if recommendations:
-                    # Check if difficulty/level is considered
-                    level_mentioned = any(level.lower() in str(rec).lower() 
-                                        for rec in recommendations)
-                    
-                    print(f"      ✅ {level} recommendations: {len(recommendations)} items")
-                    
-                    if level_mentioned:
-                        print(f"         Level-specific content detected")
-                else:
-                    print(f"      ⚠️ No {level} recommendations (might be expected)")
-            else:
-                print(f"      ❌ {level} recommendations failed: {response.status_code}")
-                return False
-        
-        return True
-    
-    def test_resources_seeding(self):
-        """Test resources seeding functionality"""
-        print("🧪 Testing Resources Seeding...")
-        
-        # Test seeding endpoint (might be admin-only)
-        response = requests.post(f"{BACKEND_URL}/api/seed-resources/")
-        
-        if response.status_code == 200:
-            result = response.json()
-            
-            if "message" in result:
-                print("   ✅ Resources seeding completed")
-                print(f"      Message: {result['message']}")
-                
-                # Check if resources were actually seeded
-                if "seeded_count" in result:
-                    print(f"      Seeded resources: {result['seeded_count']}")
-                
-                return True
-            else:
-                print("   ❌ No message in seeding response")
-                return False
-        elif response.status_code == 409:
-            # Resources already exist
-            print("   ✅ Resources already seeded (409 response)")
-            return True
-        elif response.status_code in [401, 403]:
-            # Might require authentication or admin privileges
-            print("   ⚠️ Resources seeding requires special privileges")
-            return True
-        else:
-            print(f"   ❌ Resources seeding failed: {response.status_code}")
-            return False
-    
-    def test_sales_endpoint(self):
-        """Test sales/resources endpoint functionality"""
-        print("🧪 Testing Sales/Resources Endpoint...")
-        
-        # Test sales endpoint (might be for course/resource sales)
-        response = requests.get(f"{BACKEND_URL}/api/sales/")
-        
-        if response.status_code == 200:
-            result = response.json()
-            
-            print("   ✅ Sales endpoint accessible")
-            
-            # Check for expected structure
-            if isinstance(result, dict):
-                print(f"      Response fields: {list(result.keys())}")
-            elif isinstance(result, list):
-                print(f"      Response items: {len(result)}")
-            
-            return True
-        elif response.status_code == 404:
-            print("   ⚠️ Sales endpoint not implemented (404)")
-            return True
-        elif response.status_code in [401, 403]:
-            print("   ⚠️ Sales endpoint requires authentication")
-            return True
-        else:
-            print(f"   ❌ Sales endpoint error: {response.status_code}")
-            return False
-    
     def test_question_answer_persistence(self):
         """Test that questions and answers are saved properly"""
         print("🧪 Testing Question-Answer Persistence...")
@@ -373,11 +209,11 @@ class QuestionAssistantTester:
             return False
     
     def run_all_tests(self):
-        """Run all question assistant and recommendations tests"""
-        print("🚀 Starting Question Assistant & Recommendations Tests...\n")
+        """Run all question assistant tests"""
+        print("🚀 Starting Question Assistant Tests...\n")
         
         success_count = 0
-        total_tests = 6
+        total_tests = 3
         
         try:
             if not self.setup_test_user():
@@ -392,18 +228,6 @@ class QuestionAssistantTester:
                 success_count += 1
             print()
             
-            if self.test_recommendations_endpoint():
-                success_count += 1
-            print()
-            
-            if self.test_recommendations_personalization():
-                success_count += 1
-            print()
-            
-            if self.test_resources_seeding():
-                success_count += 1
-            print()
-            
             if self.test_question_answer_persistence():
                 success_count += 1
             print()
@@ -415,13 +239,13 @@ class QuestionAssistantTester:
             if self.session_token:
                 self.cleanup_test_user()
         
-        print(f"\n📊 Question Assistant & Recommendations Test Results: {success_count}/{total_tests} tests passed")
+        print(f"\n📊 Question Assistant Test Results: {success_count}/{total_tests} tests passed")
         
         if success_count == total_tests:
-            print("🎉 All Q&A and recommendations tests passed!")
+            print("🎉 All Q&A tests passed!")
             return True
         else:
-            print("⚠️ Some Q&A and recommendations tests failed. Check the output above for details.")
+            print("⚠️ Some Q&A tests failed. Check the output above for details.")
             print("💡 Note: Some tests may fail if external Q&A services are not configured.")
             return False
 
