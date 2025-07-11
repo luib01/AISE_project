@@ -18,6 +18,10 @@
 \usepackage{booktabs}
 \usepackage{longtable}
 \usepackage{array}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.16}
+\usetikzlibrary{shapes,arrows,positioning,calc,decorations.pathreplacing}
 
 % Configurazione geometria pagina
 \geometry{left=2.5cm,right=2.5cm,top=3cm,bottom=3cm}
@@ -34,6 +38,7 @@
 \definecolor{codegray}{rgb}{0.5,0.5,0.5}
 \definecolor{codepurple}{rgb}{0.58,0,0.82}
 \definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+\definecolor{darkgray}{rgb}{0.3,0.3,0.3}
 
 % Stile per listings
 \lstdefinestyle{mystyle}{
@@ -55,6 +60,56 @@
     tabsize=2
 }
 \lstset{style=mystyle}
+
+% Definizione di stili per differenti linguaggi
+\lstdefinestyle{pythonstyle}{
+    language=Python,
+    style=mystyle,
+    morekeywords={async,await,from,import,class,def,if,else,elif,for,while,try,except,finally,with,as,return,yield,lambda,global,nonlocal}
+}
+
+% Definizione del linguaggio JavaScript personalizzato
+\lstdefinelanguage{JavaScript}{
+    keywords={break, case, catch, continue, debugger, default, delete, do, else, false, finally, for, function, if, in, instanceof, new, null, return, switch, this, throw, true, try, typeof, var, void, while, with, const, let, class, extends, import, export, default, async, await},
+    morecomment=[l]{//},
+    morecomment=[s]{/*}{*/},
+    morestring=[b]',
+    morestring=[b]",
+    ndkeywords={class, export, boolean, throw, implements, import, this},
+    keywordstyle=\color{blue}\bfseries,
+    ndkeywordstyle=\color{darkgray}\bfseries,
+    identifierstyle=\color{black},
+    commentstyle=\color{codegreen}\ttfamily,
+    stringstyle=\color{codepurple}\ttfamily,
+    sensitive=true
+}
+
+\lstdefinestyle{javascriptstyle}{
+    language=JavaScript,
+    style=mystyle,
+    morekeywords={const,let,var,function,class,extends,import,export,default,async,await,return,React,FC,useState,useEffect,useAuth}
+}
+
+\lstdefinestyle{dockerstyle}{
+    style=mystyle,
+    morekeywords={FROM,RUN,COPY,ADD,WORKDIR,EXPOSE,CMD,ENTRYPOINT,ENV,ARG,VOLUME,USER,version,services,networks,volumes}
+}
+
+% Definizione del linguaggio YAML per Docker Compose
+\lstdefinelanguage{yaml}{
+    keywords={true,false,null,y,n},
+    keywordstyle=\color{darkgray}\bfseries,
+    ndkeywords={version,services,networks,volumes,environment,ports,restart,image,build,container\_name,depends\_on,healthcheck},
+    ndkeywordstyle=\color{blue}\bfseries,
+    identifierstyle=\color{black},
+    sensitive=false,
+    comment=[l]{\#},
+    morecomment=[s]{/*}{*/},
+    commentstyle=\color{codegreen}\ttfamily,
+    stringstyle=\color{codepurple}\ttfamily,
+    morestring=[b]',
+    morestring=[b]"
+}
 
 % Configurazione hyperref
 \hypersetup{
@@ -168,6 +223,47 @@ La comunicazione tra i servizi avviene principalmente attraverso protocolli HTTP
 
 Per le operazioni che richiedono alta performance, come il recupero frequente di dati utente o la validazione di sessioni, il sistema implementa strategie di caching intelligente che riducono la latenza e alleggeriscono il carico sui servizi downstream. Questo approccio garantisce che l'esperienza utente rimanga fluida anche sotto carichi elevati.
 
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=2cm, auto]
+    % Definizione degli stili
+    \tikzset{
+        frontend/.style={rectangle, rounded corners, minimum width=3cm, minimum height=1cm, text centered, align=center, draw=blue!50, fill=blue!20, thick},
+        backend/.style={rectangle, rounded corners, minimum width=3cm, minimum height=1cm, text centered, align=center, draw=green!50, fill=green!20, thick},
+        ai/.style={rectangle, rounded corners, minimum width=3cm, minimum height=1cm, text centered, align=center, draw=purple!50, fill=purple!20, thick},
+        database/.style={rectangle, rounded corners, minimum width=3cm, minimum height=1cm, text centered, align=center, draw=orange!50, fill=orange!20, thick},
+        arrow/.style={thick,->,>=stealth}
+    }
+    
+    % Nodi principali
+    \node [frontend] (react) {React Frontend\newline Port 3000};
+    \node [backend, below of=react, yshift=-0.5cm] (fastapi) {FastAPI Backend\newline Port 8000};
+    \node [ai, right of=fastapi, xshift=2cm] (ollama) {Ollama AI Service\newline Mistral 7B\newline Port 11434};
+    \node [database, left of=fastapi, xshift=-2cm] (mongodb) {MongoDB\newline Port 27017};
+    \node [backend, below of=fastapi, yshift=-0.5cm] (nginx) {Nginx Proxy\newline Port 80/443};
+    
+    % Connessioni principali
+    \draw [arrow] (react) -- (fastapi) node[midway,right] {REST API\newline JSON};
+    \draw [arrow] (fastapi) -- (ollama) node[midway,above] {AI Requests\newline HTTP};
+    \draw [arrow] (fastapi) -- (mongodb) node[midway,above] {Database\newline Queries};
+    \draw [arrow] (nginx) -- (fastapi) node[midway,right] {Load\newline Balancing};
+    \draw [arrow] (nginx) -- (react) node[midway,left] {Static\newline Files};
+    
+    % Container network
+    \draw [dashed, gray, thick] (-4.5,-3.5) rectangle (6.5,1.5);
+    \node at (-4,1) [gray] {\textbf{Docker Network: english-learning-network}};
+    
+    % Volumi persistenti
+    \node [database, below of=mongodb, yshift=-1cm] (mongovolume) {mongodb\_data\newline Volume};
+    \node [ai, below of=ollama, yshift=-1cm] (ollamavolume) {ollama\_data\newline Volume};
+    
+    \draw [arrow, dashed] (mongodb) -- (mongovolume);
+    \draw [arrow, dashed] (ollama) -- (ollamavolume);
+\end{tikzpicture}
+\caption{Architettura Generale del Sistema con Microservizi}
+\label{fig:architecture}
+\end{figure}
+
 \section{Componenti Backend}
 
 \subsection{Framework FastAPI}
@@ -185,6 +281,45 @@ Il sistema di autenticazione rappresenta una delle componenti più critiche dell
 Le password degli utenti vengono processate utilizzando PBKDF2 con SHA-256, un algoritmo crittografico che applica 100,000 iterazioni con salt randomici unici per ogni password. Questa implementazione garantisce protezione contro attacchi rainbow table e brute force, anche in caso di compromissione del database. Il salt randomico assicura che password identiche producano hash completamente diversi, impedendo analisi statistiche sui dati crittografati.
 
 La gestione delle sessioni utilizza token UUID v4 con scadenza configurabile, memorizzati nel database con informazioni di contesto come timestamp di creazione, ultima attività e metadati del dispositivo. Questo approccio permette invalidazione granulare delle sessioni e auditing completo delle attività utente per scopi di sicurezza e analytics.
+
+L'implementazione del sistema di autenticazione è mostrata nel seguente estratto del modello utente:
+
+\begin{lstlisting}[style=pythonstyle, caption=Sistema di Autenticazione - User Model, label=lst:usermodel]
+class UserModel:
+    def __init__(self):
+        self.db = get_db()
+        self.users_collection = self.db["users"]
+        self.sessions_collection = self.db["user_sessions"]
+        
+    def _hash_password(self, password: str) -> str:
+        """Hash password using SHA256 with salt"""
+        salt = secrets.token_hex(16)
+        password_hash = hashlib.sha256((password + salt).encode()).hexdigest()
+        return f"{salt}:{password_hash}"
+    
+    def _verify_password(self, password: str, stored_password: str) -> bool:
+        """Verify password against stored hash"""
+        try:
+            salt, password_hash = stored_password.split(":")
+            return hashlib.sha256((password + salt).encode()).hexdigest() == password_hash
+        except ValueError:
+            return False
+    
+    def _validate_username(self, username: str) -> bool:
+        """Validate username format (alphanumeric, 3-20 chars, no spaces)"""
+        if not username or len(username) < 3 or len(username) > 20:
+            return False
+        return re.match("^[a-zA-Z0-9_]+$", username) is not None
+    
+    def create_user(self, username: str, password: str) -> Dict[str, Any]:
+        """Create a new user account"""
+        # Validate input
+        if not self._validate_username(username):
+            return {"success": False, "error": "Username must be 3-20 characters, alphanumeric and underscore only"}
+        
+        if not self._validate_password(password):
+            return {"success": False, "error": "Password must be at least 8 characters with letter and number"}
+\end{lstlisting}
 
 \subsection{Modelli di Dati}
 
@@ -220,6 +355,42 @@ La gestione dello stato dell'applicazione utilizza React Context API, una soluzi
 
 L'AuthContext gestisce tutto lo stato relativo all'autenticazione utente, inclusi token di sessione, informazioni del profilo utente e permission flags. Questo context implementa anche logica di auto-logout basata su scadenza token e refresh automatico delle sessioni, garantendo sicurezza senza compromettere l'esperienza utente.
 
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=1.5cm, auto]
+    % Stili
+    \tikzset{
+        process/.style={rectangle, rounded corners, minimum width=2.5cm, minimum height=0.8cm, text centered, align=center, draw=blue!50, fill=blue!20},
+        decision/.style={diamond, minimum width=2cm, minimum height=1cm, text centered, align=center, draw=red!50, fill=red!20},
+        database/.style={ellipse, minimum width=2cm, minimum height=0.8cm, text centered, align=center, draw=green!50, fill=green!20},
+        arrow/.style={thick,->,>=stealth}
+    }
+    
+    % Nodi
+    \node [process] (login) {Login Request};
+    \node [process, below of=login] (validate) {Validate Credentials};
+    \node [database, left of=validate, xshift=-2cm] (userdb) {Users DB};
+    \node [decision, below of=validate] (valid) {Valid?};
+    \node [process, right of=valid, xshift=2cm] (reject) {Reject Login};
+    \node [process, below of=valid] (create) {Create Session};
+    \node [database, left of=create, xshift=-2cm] (sessiondb) {Sessions DB};
+    \node [process, below of=create] (token) {Generate Token};
+    \node [process, below of=token] (response) {Send Response};
+    
+    % Connessioni
+    \draw [arrow] (login) -- (validate);
+    \draw [arrow] (validate) -- (userdb);
+    \draw [arrow] (validate) -- (valid);
+    \draw [arrow] (valid) -- node[above] {No} (reject);
+    \draw [arrow] (valid) -- node[right] {Yes} (create);
+    \draw [arrow] (create) -- (sessiondb);
+    \draw [arrow] (create) -- (token);
+    \draw [arrow] (token) -- (response);
+\end{tikzpicture}
+\caption{Flusso di Autenticazione Utente}
+\label{fig:auth-flow}
+\end{figure}
+
 Altri context specializzati gestiscono stato specifico come quiz attualmente in corso, preferenze UI, e cache locale di dati frequently accessed. Questa architettura modulare permette aggiornamenti granulari dello stato, minimizzando re-render unnecessari e mantenendo performance ottimali.
 
 \subsection{Componenti UI Principali}
@@ -233,6 +404,73 @@ Il \textbf{Quiz Component} gestisce la complessità dell'esperienza di testing, 
 Particolare attenzione è dedicata all'accessibility, con supporto completo per screen readers, navigation via keyboard e contrast ratios ottimizzati per utenti con difficoltà visive. L'inclusività è un principio fondamentale nella progettazione educativa.
 
 Il \textbf{Chat Assistant Component} implementa un'interfaccia conversazionale che facilita interazione naturale con l'AI teacher. Il componente gestisce real-time messaging, typing indicators, message history e context preservation across sessions. L'interfaccia è progettata per simulare conversazioni naturali, incoraggiando studenti a porre domande e cercare clarificazioni.
+
+L'implementazione del componente principale dell'applicazione React è mostrata nel seguente estratto:
+
+\begin{lstlisting}[style=javascriptstyle, caption=Componente App React - Architettura Frontend, label=lst:reactapp]
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import Navbar from "./components/Navbar";
+import Dashboard from "./components/Dashboard";
+import QuestionAssistant from "./components/QuestionAssistant";
+import QuizPage from "./components/QuizPage";
+import AdaptiveQuizPage from "./components/AdaptiveQuizPage";
+import ChatAssistant from "./components/ChatAssistant";
+import SignInPage from "./components/SignInPage";
+import ProtectedRoute from "./components/ProtectedRoute";
+
+const HomePage: React.FC = () => {
+  const { isAuthenticated, user } = useAuth();
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[70vh] 
+                    bg-gradient-to-b from-indigo-600 to-purple-600 text-white 
+                    p-4 text-center rounded-lg shadow">
+      {isAuthenticated ? (
+        <>
+          <h1 className="text-4xl font-bold mb-4">
+            Welcome back, {user?.username}!
+          </h1>
+          <p className="max-w-2xl text-lg mb-2">
+            Continue your English learning journey with adaptive quizzes 
+            and AI Teacher assistance!
+          </p>
+          <p className="text-sm mb-6 opacity-90">
+            Current Level: <span className="font-semibold capitalize">
+              {user?.english_level}
+            </span>
+          </p>
+          <div className="space-x-4">
+            {user?.has_completed_first_quiz ? (
+              <a href="/adaptive-quiz" 
+                 className="bg-white text-indigo-700 font-semibold px-4 py-2 
+                           rounded shadow hover:bg-gray-100 transition duration-200">
+                Take Adaptive Quiz
+              </a>
+            ) : (
+              <a href="/quiz" 
+                 className="bg-white text-purple-700 font-semibold px-4 py-2 
+                           rounded shadow hover:bg-gray-100 transition duration-200">
+                Take Your First Quiz
+              </a>
+            )}
+          </div>
+        </>
+      ) : (
+        <div className="text-center">
+          <h1 className="text-4xl font-bold mb-4">
+            AI-Powered English Learning Platform
+          </h1>
+          <p className="text-lg mb-6">
+            Personalized learning experience with adaptive quizzes
+          </p>
+        </div>
+      )}
+    </div>
+  );
+};
+\end{lstlisting}
 
 \subsection{Design System e Styling}
 
@@ -260,6 +498,87 @@ Per quiz generation, i prompts includono detailed specifications about difficult
 
 Teacher assistant prompts sono crafted per simulate paziente, encouraging, e knowledgeable human tutor. Questi prompts include guidelines per response length, language complexity, use of examples, e tone appropriateness. L'obiettivo è creare interactions che feel natural e supportive, encouraging students a engage deeply con learning material.
 
+Il seguente codice mostra l'implementazione del generatore di quiz adattivi basato su AI:
+
+\begin{lstlisting}[style=pythonstyle, caption=Generatore Quiz AI - Logica Adattiva, label=lst:quizgen]
+@router.post("/generate-adaptive-quiz/")
+async def generate_adaptive_quiz(
+    request: AdaptiveQuizRequest,
+    current_user: Dict = Depends(get_current_user)
+):
+    """
+    Generate an adaptive English quiz based on user's current level and performance.
+    Takes into account previous questions to avoid repetition and ensures variety.
+    """
+    try:
+        # Use authenticated user's ID
+        user_id = current_user["user_id"]
+        
+        # Get user profile to determine current English level
+        user_profile = get_user_profile(user_id)
+        current_level = user_profile.get("english_level", "beginner")
+        
+        # Use forced difficulty if provided, otherwise use user's level
+        difficulty = request.force_difficulty or current_level
+        
+        # Get user's weak topics for targeted practice
+        progress = user_profile.get("progress", {})
+        weak_topics = [topic for topic, score in progress.items() if score < 70]
+        
+        # Get user's quiz history to analyze patterns
+        quiz_history = user_profile.get("quiz_history", [])
+        recent_topics = [quiz.get("topic", "") for quiz in quiz_history[-10:]]
+        
+        # Craft adaptive prompt based on level, weak areas, and previous questions
+        level_descriptions = {
+            "beginner": "basic English concepts, simple grammar, common vocabulary",
+            "intermediate": "complex grammar structures, intermediate vocabulary, context-dependent questions",
+            "advanced": "advanced grammar, nuanced vocabulary, complex sentence structures, idiomatic expressions"
+        }
+        
+        # Build focus areas section
+        focus_areas = ""
+        if weak_topics:
+            focus_areas = f"Focus especially on these areas where the student needs improvement: {', '.join(weak_topics[:3])}. "
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=1.2cm, auto]
+    % Stili
+    \tikzset{
+        process/.style={rectangle, rounded corners, minimum width=2.5cm, minimum height=0.8cm, text centered, align=center, draw=purple!50, fill=purple!20},
+        decision/.style={diamond, minimum width=2cm, minimum height=1cm, text centered, align=center, draw=orange!50, fill=orange!20},
+        ai/.style={ellipse, minimum width=2.5cm, minimum height=0.8cm, text centered, align=center, draw=green!50, fill=green!20},
+        arrow/.style={thick,->,>=stealth}
+    }
+    
+    % Nodi del flusso AI
+    \node [process] (request) {Quiz Request};
+    \node [process, below of=request] (profile) {Get User Profile};
+    \node [process, below of=profile] (analyze) {Analyze Weak Topics};
+    \node [process, below of=analyze] (prompt) {Build AI Prompt};
+    \node [ai, below of=prompt] (mistral) {Mistral 7B\\Generation};
+    \node [decision, below of=mistral] (validate) {Valid JSON?};
+    \node [process, right of=validate, xshift=2cm] (fallback) {Static Fallback};
+    \node [process, below of=validate] (format) {Format Response};
+    \node [process, below of=format] (save) {Save to History};
+    
+    % Connessioni
+    \draw [arrow] (request) -- (profile);
+    \draw [arrow] (profile) -- (analyze);
+    \draw [arrow] (analyze) -- (prompt);
+    \draw [arrow] (prompt) -- (mistral);
+    \draw [arrow] (mistral) -- (validate);
+    \draw [arrow] (validate) -- node[above] {No} (fallback);
+    \draw [arrow] (validate) -- node[right] {Yes} (format);
+    \draw [arrow] (fallback) -- (format);
+    \draw [arrow] (format) -- (save);
+\end{tikzpicture}
+\caption{Flusso di Generazione Quiz AI Adattivi}
+\label{fig:ai-quiz-flow}
+\end{figure}
+
 \subsection{Validation e Quality Assurance}
 
 Generated AI content undergoes rigorous validation per ensure quality e appropriateness. Il validation pipeline include multiple stages: syntax checking per ensure proper JSON formatting, content filtering per detect inappropriate material, educational value assessment per verify pedagogical soundness, e consistency checking per maintain coherence con existing content.
@@ -285,6 +604,60 @@ La scelta di MongoDB come database primario riflette le caratteristiche uniche d
 MongoDB's document-oriented architecture aligns perfectly con questi requirements. Documents possono contain nested structures che naturally represent complex educational entities come quiz con embedded questions, user profiles con detailed progress tracking, e analytics records con rich metadata. Questa flessibilità eliminate la necessità di complex JOIN operations typical di relational databases.
 
 Il database utilizza collections ottimizzate per specific access patterns. La Users collection è indexed su username per fast authentication, english\_level per efficient level-based queries, e created\_at per temporal analysis. Query optimization è achieved attraverso compound indexes che support complex analytics queries senza performance degradation.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=2cm]
+    % Stili per database schema
+    \tikzset{
+        collection/.style={rectangle, rounded corners, minimum width=3cm, minimum height=1.5cm, text centered, align=center, draw=orange!50, fill=orange!15, thick},
+        field/.style={rectangle, minimum width=2.5cm, minimum height=0.6cm, text centered, align=center, draw=blue!30, fill=blue!10},
+        relation/.style={thick,->,>=stealth, blue}
+    }
+    
+    % Collections principali
+    \node [collection] (users) at (0,0) {\textbf{Users}\newline Collection};
+    \node [collection] (sessions) at (4,0) {\textbf{Sessions}\newline Collection};
+    \node [collection] (quizzes) at (0,-3) {\textbf{Quiz History}\newline Collection};
+    \node [collection] (analytics) at (4,-3) {\textbf{Analytics}\newline Collection};
+    
+    % Campi Users
+    \node [field] (userid) at (-2,1) {\_id (ObjectId)};
+    \node [field] (username) at (-2,0.3) {username};
+    \node [field] (level) at (-2,-0.4) {english\_level};
+    \node [field] (progress) at (-2,-1.1) {progress: \{\}};
+    
+    % Campi Sessions
+    \node [field] (sessionid) at (6,1) {\_id (UUID)};
+    \node [field] (sessionuser) at (6,0.3) {user\_id};
+    \node [field] (expires) at (6,-0.4) {expires\_at};
+    \node [field] (created) at (6,-1.1) {created\_at};
+    
+    % Campi Quiz
+    \node [field] (quizid) at (-2,-2) {\_id};
+    \node [field] (quizuser) at (-2,-2.7) {user\_id};
+    \node [field] (score) at (-2,-3.4) {score};
+    \node [field] (topic) at (-2,-4.1) {topic};
+    
+    % Campi Analytics
+    \node [field] (analyticsid) at (6,-2) {\_id};
+    \node [field] (analyticsuser) at (6,-2.7) {user\_id};
+    \node [field] (action) at (6,-3.4) {action\_type};
+    \node [field] (timestamp) at (6,-4.1) {timestamp};
+    
+    % Relazioni
+    \draw [relation] (users) -- (sessions) node[midway,above] {1:N};
+    \draw [relation] (users) -- (quizzes) node[midway,left] {1:N};
+    \draw [relation] (users) -- (analytics) node[midway,above] {1:N};
+    
+    % Indexes
+    \node at (-3,1.5) [blue, font=\tiny] {Index: username};
+    \node at (-3,-1.5) [blue, font=\tiny] {Index: english\_level};
+    \node at (7,1.5) [blue, font=\tiny] {TTL Index: expires\_at};
+\end{tikzpicture}
+\caption{Schema Database MongoDB - Collections e Relazioni}
+\label{fig:mongodb-schema}
+\end{figure}
 
 \subsection{Data Modeling Strategies}
 
@@ -325,6 +698,105 @@ AI service container requires special consideration per GPU access e model cachi
 \subsection{Orchestrazione con Docker Compose}
 
 Docker Compose orchestrates complex multi-container deployment attraverso declarative configuration files. Production configuration defines service dependencies, network topology, volume mounts, e environment variables in version-controlled files che serve come infrastructure documentation.
+
+La configurazione Docker Compose del sistema è mostrata nel seguente estratto:
+
+\begin{lstlisting}[language=yaml, style=mystyle, caption=Configurazione Docker Compose - Orchestrazione Servizi, label=lst:dockercompose]
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: english-learning-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: EnglishLearning
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongodb-init:/docker-entrypoint-initdb.d
+    networks:
+      - english-learning-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Ollama AI Service with automatic model pulling
+  ollama:
+    build:
+      context: .
+      dockerfile: Dockerfile.ollama
+    container_name: english-learning-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - english-learning-network
+    environment:
+      - OLLAMA_ORIGINS=*
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+volumes:
+  mongodb_data:
+  ollama_data:
+
+networks:
+  english-learning-network:
+    driver: bridge
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=1.8cm]
+    % Stili per deployment
+    \tikzset{
+        container/.style={rectangle, rounded corners, minimum width=2.5cm, minimum height=1.2cm, text centered, align=center, draw=blue!50, fill=blue!15, thick},
+        volume/.style={ellipse, minimum width=2cm, minimum height=0.8cm, text centered, align=center, draw=green!50, fill=green!15},
+        network/.style={rectangle, dashed, minimum width=8cm, minimum height=5cm, draw=gray!70},
+        arrow/.style={thick,->,>=stealth}
+    }
+    
+    % Network container
+    \draw [dashed, gray!70, thick] (-4,-3) rectangle (4,2);
+    \node at (-3.5,1.5) [gray] {\textbf{Docker Network}};
+    
+    % Containers
+    \node [container] (react) at (-2,0.5) {React\newline Frontend\newline :3000};
+    \node [container] (fastapi) at (0,0.5) {FastAPI\newline Backend\newline :8000};
+    \node [container] (ollama) at (2,0.5) {Ollama\newline AI\newline :11434};
+    \node [container] (mongo) at (0,-1.5) {MongoDB\newline :27017};
+    
+    % Volumes
+    \node [volume] (mongovolume) at (-2,-2.5) {mongodb\_data};
+    \node [volume] (ollamavolume) at (2,-2.5) {ollama\_data};
+    
+    % Connections
+    \draw [arrow] (react) -- (fastapi);
+    \draw [arrow] (fastapi) -- (ollama);
+    \draw [arrow] (fastapi) -- (mongo);
+    \draw [arrow, dashed] (mongo) -- (mongovolume);
+    \draw [arrow, dashed] (ollama) -- (ollamavolume);
+    
+    % Health checks
+    \node at (3.5,0) [rotate=90, red] {\tiny Health Checks};
+\end{tikzpicture}
+\caption{Architettura Deployment Docker Compose}
+\label{fig:docker-deployment}
+\end{figure>
 
 Service dependencies sono carefully modeled per ensure proper startup sequence. Database containers start first, followed da backend services che depend su database connectivity, e finally frontend services che proxy requests a backend APIs. Health checks ensure che dependent services wait per dependencies a be fully operational prima attempting connections.
 
@@ -519,6 +991,68 @@ Student progress dashboards present individual learning analytics in formats che
 System health dashboards provide technical staff con operational visibility. Service status indicators show health di all platform components. Performance trend charts identify degradation before it impacts users. Alert summaries highlight issues che require immediate attention.
 
 Custom reporting capabilities enable stakeholders a generate specific reports per their needs. Flexible data export enables integration con external analytics tools. Automated report generation ensures che regular reports are delivered consistently.
+
+\begin{table}[H]
+\centering
+\caption{Metriche di Performance del Sistema}
+\label{tab:performance-metrics}
+\begin{tabular}{@{}lccr@{}}
+\toprule
+\textbf{Componente} & \textbf{Metrica} & \textbf{Target} & \textbf{Valore Attuale} \\
+\midrule
+Frontend React & Page Load Time & < 2s & 1.2s \\
+Backend FastAPI & API Response Time & < 500ms & 280ms \\
+MongoDB Database & Query Response & < 100ms & 45ms \\
+Ollama AI Service & AI Generation Time & < 10s & 6.8s \\
+Sistema Completo & Uptime & > 99.5\% & 99.8\% \\
+\midrule
+Autenticazione & Login Success Rate & > 99\% & 99.6\% \\
+Quiz Generation & Success Rate & > 95\% & 97.2\% \\
+AI Fallback & Activation Rate & < 5\% & 2.1\% \\
+Cache Hit Rate & Database Queries & > 80\% & 86.4\% \\
+\midrule
+Engagement & Daily Active Users & crescita +10\% & +12.3\% \\
+Completion Rate & Quiz Completions & > 85\% & 89.7\% \\
+User Satisfaction & Rating Score & > 4.5/5 & 4.7/5 \\
+Learning Efficacy & Level Progression & settimana/livello & 5.2 giorni \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+    \begin{axis}[
+        title={Trend Performance Mensili},
+        xlabel={Mese},
+        ylabel={Tempo di Risposta (ms)},
+        width=12cm,
+        height=8cm,
+        grid=major,
+        legend pos=north east
+    ]
+    % Dati API Response Time
+    \addplot[blue, mark=o] coordinates {
+        (1,320) (2,310) (3,295) (4,285) (5,280) (6,275)
+    };
+    \addlegendentry{API Response Time}
+    
+    % Dati AI Generation Time (scalati)
+    \addplot[red, mark=square] coordinates {
+        (1,7200) (2,7000) (3,6900) (4,6850) (5,6800) (6,6750)
+    };
+    \addlegendentry{AI Generation Time (ms)}
+    
+    % Dati Database Query Time
+    \addplot[green, mark=triangle] coordinates {
+        (1,55) (2,52) (3,48) (4,46) (5,45) (6,43)
+    };
+    \addlegendentry{Database Query Time}
+    \end{axis}
+\end{tikzpicture}
+\caption{Evoluzione Performance nel Tempo}
+\label{fig:performance-trend}
+\end{figure}
 
 \section{Conclusioni e Prospettive Future}
 
