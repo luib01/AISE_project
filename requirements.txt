@@ -43,6 +43,7 @@ pydantic==2.10.5
 pydantic_core==2.27.2
 Pygments==2.19.1
 pymongo==4.10.1
+pytest==8.3.4
 python-dotenv==1.0.1
 PyYAML==6.0.2
 regex==2024.11.6

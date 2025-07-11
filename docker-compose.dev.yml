@@ -19,9 +19,7 @@ services:
 
   # Ollama AI Service with automatic model pulling
   ollama:
-    build:
-      context: .
-      dockerfile: Dockerfile.ollama
+    image: ollama/ollama:latest
     container_name: english-learning-dev-ollama
     restart: unless-stopped
     ports:
@@ -45,6 +43,7 @@ services:
       timeout: 10s
       retries: 5
       start_period: 60s
+    entrypoint: ["/bin/ollama", "serve"]
 
   # Backend Development with hot reload
   backend-dev:
@@ -82,6 +81,7 @@ services:
     volumes:
       - ./backend:/app
       - /app/__pycache__
+    command: ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
   # Frontend Development with hot reload
   frontend-dev:
