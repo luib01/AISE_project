@@ -32,6 +32,10 @@ async def generate_adaptive_quiz(
     """
     Generate an adaptive English quiz based on user's current level and performance.
     Takes into account previous questions to avoid repetition and ensures variety.
+    
+    IMPORTANT: The AI prompt is designed to ensure that the correct_answer field
+    always contains exactly one of the provided options. This is critical for
+    quiz validation and scoring. If modifying the prompt, maintain this requirement.
     """
     try:
         print(f"DEBUG: Starting quiz generation for user {current_user['user_id']}")
@@ -128,6 +132,9 @@ async def generate_adaptive_quiz(
         Requirements:
         - Questions MUST be {difficulty} level appropriate
         - Each question MUST have exactly 4 options (A, B, C, D)
+        - The correct_answer MUST be EXACTLY one of the 4 options provided (word-for-word match)
+        - NEVER create a correct_answer that is different from the options
+        - The correct_answer field must contain the EXACT text from one of the options array
         - Provide clear, educational explanations for correct answers
         - Make questions engaging and practical for real-world English use
         - Ensure variety in question types and subtopics within {request.topic}
@@ -136,6 +143,11 @@ async def generate_adaptive_quiz(
         
         SPECIAL INSTRUCTIONS FOR READING QUESTIONS:
         If the topic is "Reading", you MUST include a "passage" field in each question containing a short reading passage (150-250 words) appropriate for {difficulty} level students. The passage should be engaging and educational, and all questions should be based on this passage. Include questions about main ideas, specific details, inference, vocabulary in context, or author's purpose.
+        
+        CRITICAL VALIDATION RULE:
+        The "correct_answer" field MUST contain the EXACT same text as one of the four options in the "options" array. 
+        Do NOT paraphrase, abbreviate, or modify the correct answer text. 
+        Copy the exact text from the chosen option into the correct_answer field.
         
         Format your response as valid JSON only, with this exact structure:
         {{
@@ -189,6 +201,8 @@ async def generate_adaptive_quiz(
         
         CRITICAL: You MUST generate exactly 4 questions. Each question must be unique and cover different aspects of {request.topic}.
         Ensure maximum variety while staying within the {request.topic} topic and {difficulty} difficulty level.
+        
+        FINAL REMINDER: Double-check that each "correct_answer" is EXACTLY the same text as one of the four options in the "options" array.
         """
         
         # Use centralized Ollama configuration
@@ -229,13 +243,21 @@ async def generate_adaptive_quiz(
             questions = quiz_data.get("questions", [])
             valid_questions = 0
             
-            for question in questions:
+            for i, question in enumerate(questions):
                 # Check if question has all required fields and 4 options
                 required_fields = ['question', 'options', 'correct_answer', 'explanation', 'topic', 'difficulty']
                 if (all(field in question for field in required_fields) and 
                     isinstance(question.get('options'), list) and 
                     len(question.get('options', [])) == 4):
-                    valid_questions += 1
+                    
+                    # Additional validation: correct_answer must be exactly one of the options
+                    correct_answer = question.get('correct_answer', '')
+                    options = question.get('options', [])
+                    
+                    if correct_answer in options:
+                        valid_questions += 1
+                    else:
+                        print(f"DEBUG: Question {i+1} correct_answer '{correct_answer}' not found in options: {options}")
             
             if len(questions) != 4 or valid_questions != 4:
                 # If not exactly 4 valid questions, create fallback quiz
