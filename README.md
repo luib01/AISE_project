@@ -790,7 +790,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 - **Issues**: [GitHub Issues](https://github.com/your-repo/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/your-repo/discussions)
 - **Documentation**: This README and inline code documentation
-- **Developer**: [RoLBester]
+- **Developer**: [Luib01, KaminariManu]
 
 ---
 

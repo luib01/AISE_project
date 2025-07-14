@@ -1,0 +1,1919 @@
+\documentclass[a4paper, 14pt, oneside]{extbook}
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{listings}
+\usepackage{xcolor}
+
+% Definizione manuale del linguaggio JavaScript per listings
+\lstdefinelanguage{JavaScript}{
+    keywords={typeof, new, true, false, catch, function, return, null, catch, switch, var, if, in, while, do, else, case, break, const, let, async, await, import, export, default, class, extends, React, useState, useEffect, useAuth},
+    keywordstyle=\color{blue}\bfseries,
+    ndkeywords={class, export, boolean, throw, implements, import, this, FC, JSX, tsx, jsx},
+    ndkeywordstyle=\color{darkgray}\bfseries,
+    identifierstyle=\color{black},
+    sensitive=true,
+    comment=[l]{//},
+    morecomment=[s]{/*}{*/},
+    commentstyle=\color{green}\ttfamily,
+    stringstyle=\color{red}\ttfamily,
+    morestring=[b]',
+    morestring=[b]",
+    morestring=[b]`
+}
+\usepackage{hyperref}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{setspace}
+\usepackage{parskip}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{shapes,arrows,positioning,calc,decorations.pathreplacing,shadows,patterns}
+
+% Configurazione geometria pagina per extbook
+\geometry{left=3cm,right=2.5cm,top=3.5cm,bottom=3.5cm,bindingoffset=0.5cm}
+
+% Configurazione spaziatura per migliore leggibilità
+\setstretch{1.2}
+\setlength{\parskip}{0.8em}
+
+% Configurazione header e footer
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\leftmark}
+\fancyhead[R]{\thepage}
+\fancyfoot[C]{Implementazione Piattaforma - Documentazione Tecnica Dettagliata}
+
+% Configurazione colori per codice
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+\definecolor{darkgray}{rgb}{0.3,0.3,0.3}
+
+% Stile per listings
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+\lstset{style=mystyle}
+
+% Definizione di stili per differenti linguaggi
+\lstdefinestyle{pythonstyle}{
+    language=Python,
+    style=mystyle,
+    morekeywords={async,await,from,import,class,def,if,else,elif,for,while,try,except,finally,with,as,return,yield,lambda,global,nonlocal}
+}
+
+\lstdefinestyle{javascriptstyle}{
+    language=JavaScript,
+    style=mystyle
+}
+
+\lstdefinestyle{dockerstyle}{
+    style=mystyle,
+    morekeywords={FROM,RUN,COPY,ADD,WORKDIR,EXPOSE,CMD,ENTRYPOINT,ENV,ARG,VOLUME,USER,version,services,networks,volumes}
+}
+
+% Configurazione hyperref
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    pdftitle={Implementazione della Piattaforma AI per l'Apprendimento dell'Inglese},
+    pdfauthor={Team di Sviluppo},
+    pdfsubject={Documentazione Tecnica dell'Implementazione},
+    pdfkeywords={Implementazione, AI, Machine Learning, Educazione, React, FastAPI, MongoDB}
+}
+
+% Configurazione titoli per extbook
+\titleformat{\chapter}[display]
+{\normalfont\huge\bfseries\color{blue!80!black}}
+{\filleft\Large\chaptertitlename~\thechapter}
+{3ex}
+{\titlerule[2pt]\vspace{1ex}\filleft}
+[\vspace{1ex}\titlerule[1pt]]
+
+\titleformat{\section}
+{\normalfont\Large\bfseries\color{blue!70!black}}{\thesection}{1.5em}{}
+[\vspace{0.5ex}\titlerule[0.8pt]]
+
+\titleformat{\subsection}
+{\normalfont\large\bfseries\color{blue!60!black}}{\thesubsection}{1.2em}{}
+
+\titleformat{\subsubsection}
+{\normalfont\normalsize\bfseries\color{blue!50!black}}{\thesubsubsection}{1em}{}
+
+% Inizio documento
+\begin{document}
+
+% Pagina del titolo
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    
+    {\huge\bfseries Implementazione della Piattaforma\par}
+    {\huge\bfseries di Apprendimento Inglese AI\par}
+    
+    \vspace{1.5cm}
+    
+    {\Large Documentazione Tecnica Dettagliata\par}
+    {\Large Analisi Narrativa dell'Implementazione\par}
+    
+    \vspace{2cm}
+    
+    {\large Struttura Backend, Frontend e Funzionalità\par}
+    {\large React + FastAPI + MongoDB + Mistral 7B\par}
+    
+    \vspace{3cm}
+    
+    {\large Team di Sviluppo\par}
+    {\large Data: \today\par}
+    
+    \vfill
+    
+    {\large Versione 1.0\par}
+    {\large Guida Completa all'Implementazione\par}
+    
+\end{titlepage}
+
+% Indice
+\tableofcontents
+\newpage
+
+\chapter{Implementazione della Piattaforma}
+
+L'implementazione della Piattaforma di Apprendimento Inglese AI rappresenta un'odissea tecnologica attraverso l'integrazione armoniosa di componenti software moderni, dove ogni elemento è stato meticolosamente progettato per contribuire a un ecosistema educativo intelligente e responsivo. Questa piattaforma non è semplicemente una raccolta di codice e algoritmi, ma incarna una filosofia educativa che pone lo studente al centro di un'esperienza di apprendimento personalizzata e dinamica.
+
+Il viaggio dall'idea alla realizzazione ha richiesto l'orchestrazione di molteplici tecnologie: il robusto backend Python con FastAPI che gestisce la logica di business, il frontend React responsivo che offre un'interfaccia utente intuitiva, e l'intelligenza artificiale Mistral 7B che fornisce supporto pedagogico personalizzato. Ogni componente è stato sviluppato seguendo principi di \textbf{scalabilità}, \textbf{manutenibilità} e \textbf{performance}, creando un sistema che non solo soddisfa le esigenze attuali ma è preparato per l'evoluzione futura.
+
+L'architettura complessiva riflette anni di esperienza nel campo dello sviluppo software educativo, dove abbiamo appreso che la vera sfida non risiede nella complessità tecnica, ma nell'abilità di trasformare algoritmi sofisticati in esperienze utente fluide e coinvolgenti. Questo capitolo vi guiderà attraverso un'esplorazione dettagliata di come le decisioni architetturali si traducono in benefici tangibili per educatori e studenti, mostrando come la tecnologia possa essere al servizio dell'apprendimento umano.
+
+\section{Struttura del Backend}
+
+\subsection{Il Cuore Pulsante: FastAPI come Fondazione Architetturale}
+
+Il backend della nostra piattaforma è costruito su FastAPI, una scelta strategica che riflette la nostra filosofia di unire performance eccezionali con eleganza di sviluppo. FastAPI non rappresenta semplicemente un framework web; costituisce l'architrave che sostiene l'intera esperienza educativa, garantendo che ogni richiesta degli studenti venga processata con velocità sub-secondo e affidabilità enterprise-grade.
+
+La decisione di utilizzare FastAPI deriva da diverse considerazioni tecniche fondamentali. Primo, la sua natura asincrona permette di gestire migliaia di richieste concorrenti senza degradazione delle performance, un aspetto cruciale quando centinaia di studenti potrebbero sottoporsi a quiz simultaneamente. Secondo, il sistema di validazione automatica dei dati basato su Pydantic garantisce che ogni input sia sanitizzato e validato, proteggendo l'integrità del sistema educativo. Terzo, la generazione automatica della documentazione API attraverso OpenAPI facilita enormemente la manutenzione e l'evoluzione del sistema.
+
+La struttura del backend segue un pattern architetturale a livelli che separa chiaramente le responsabilità, rendendo il sistema non solo più manutenibile ma anche concettualmente più comprensibile. Ogni modulo ha un ruolo specifico nell'ecosistema educativo: dalla gestione sicura dell'autenticazione utente fino alla generazione intelligente dei contenuti didattici personalizzati.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=2.5cm,
+    module/.style={rectangle, rounded corners=8pt, draw=#1!70, fill=#1!15, minimum width=4.5cm, minimum height=1.8cm, text centered, drop shadow={shadow xshift=2pt, shadow yshift=-2pt, fill=black!30}},
+    connection/.style={->, thick, >=stealth, color=gray!60},
+    description/.style={font=\small\bfseries, text width=3.5cm, align=center, color=#1!80},
+    layer/.style={font=\footnotesize\bfseries, text width=2.8cm, align=center, color=#1!90}
+]
+
+% Livello di presentazione
+\node[module=blue] (main) at (0,8) {\textbf{\large main.py}\par\vspace{0.3cm}\textit{Application Entry Point}\par Orchestrazione generale};
+
+% Livello di routing
+\node[module=green] (auth) at (-5.5,5.5) {\textbf{auth.py}\par\vspace{0.2cm}Authentication\par Security Manager};
+\node[module=green] (quiz) at (-1.8,5.5) {\textbf{quiz\_generator.py}\par\vspace{0.2cm}Adaptive Content\par Generation Engine};
+\node[module=green] (eval) at (1.8,5.5) {\textbf{evaluations.py}\par\vspace{0.2cm}Assessment Logic\par Scoring System};
+\node[module=green] (perf) at (5.5,5.5) {\textbf{performance.py}\par\vspace{0.2cm}Analytics Engine\par Progress Tracking};
+
+% Livello di logica di business
+\node[module=orange] (user_model) at (-3.5,3) {\textbf{user\_model.py}\par\vspace{0.2cm}User Management\par Profile \& Preferences};
+\node[module=orange] (learning) at (0,3) {\textbf{learning\_model.py}\par\vspace{0.2cm}Adaptive Algorithms\par ML Intelligence};
+\node[module=orange] (question) at (3.5,3) {\textbf{question\_model.py}\par\vspace{0.2cm}Content Management\par Quiz Repository};
+
+% Livello di persistenza
+\node[module=red] (database) at (0,0.5) {\textbf{\large db.py}\par\vspace{0.3cm}\textit{MongoDB Connection}\par Data Persistence Layer};
+
+% Connessioni principali
+\draw[connection, line width=1.5pt] (main) -- (auth);
+\draw[connection, line width=1.5pt] (main) -- (quiz);
+\draw[connection, line width=1.5pt] (main) -- (eval);
+\draw[connection, line width=1.5pt] (main) -- (perf);
+
+% Connessioni intermedie
+\draw[connection] (auth) -- (user_model);
+\draw[connection] (quiz) -- (learning);
+\draw[connection] (eval) -- (question);
+\draw[connection] (perf) -- (learning);
+
+% Connessioni al database
+\draw[connection, line width=1.2pt] (user_model) -- (database);
+\draw[connection, line width=1.2pt] (learning) -- (database);
+\draw[connection, line width=1.2pt] (question) -- (database);
+
+% Annotazioni per i livelli
+\node[layer=blue] at (-8.5,8) {\textcolor{blue!80}{\textbf{API LAYER}}\par\vspace{0.1cm}Orchestrazione\par delle richieste\par HTTP/HTTPS};
+\node[layer=green] at (-8.5,5.5) {\textcolor{green!80}{\textbf{ROUTE LAYER}}\par\vspace{0.1cm}Endpoint\par specializzati\par e middleware};
+\node[layer=orange] at (-8.5,3) {\textcolor{orange!80}{\textbf{BUSINESS LAYER}}\par\vspace{0.1cm}Logica\par dell'applicazione\par e algoritmi};
+\node[layer=red] at (-8.5,0.5) {\textcolor{red!80}{\textbf{DATA LAYER}}\par\vspace{0.1cm}Persistenza\par MongoDB\par e caching};
+
+% Bordi decorativi per i livelli
+\draw[dashed, color=blue!40, line width=1pt] (-9.5,6.8) rectangle (9.5,9.2);
+\draw[dashed, color=green!40, line width=1pt] (-9.5,4.3) rectangle (9.5,6.7);
+\draw[dashed, color=orange!40, line width=1pt] (-9.5,1.8) rectangle (9.5,4.2);
+\draw[dashed, color=red!40, line width=1pt] (-9.5,-0.7) rectangle (9.5,1.7);
+
+\end{tikzpicture}
+\caption{\textbf{Architettura Modulare del Backend FastAPI} - Rappresentazione stratificata dell'architettura backend che evidenzia la separazione delle responsabilità tra i diversi livelli applicativi. Ogni livello ha compiti specifici e comunica attraverso interfacce ben definite.}
+\label{fig:backend-architecture}
+\end{figure}
+\caption{Architettura Modulare del Backend: Separazione delle Responsabilità}
+\label{fig:backend-architecture}
+\end{figure}
+
+\subsection{La Sinfonia dell'Autenticazione: Sicurezza Senza Compromessi}
+
+L'implementazione del sistema di autenticazione rappresenta uno dei pilastri fondamentali della nostra piattaforma, dove sicurezza enterprise e usabilità consumer si incontrano in un equilibrio perfetto. Non si tratta semplicemente di verificare credenziali; è un ecosistema sofisticato che protegge l'identità digitale degli studenti mentre garantisce un'esperienza fluida e naturale, permettendo loro di concentrarsi sull'apprendimento piuttosto che sui tecnicismi di accesso.
+
+Il modulo \texttt{auth.py} implementa un approccio multi-strato alla sicurezza che va ben oltre le pratiche standard. Ogni password viene processata attraverso algoritmi di hashing SHA-256 con salt personalizzati e unici per ogni utente, garantendo che anche in uno scenario catastrofico di compromissione del database, le credenziali degli utenti rimangano crittograficamente protette. Il sistema incorpora anche meccanismi di rate limiting e rilevamento di pattern anomali per prevenire attacchi di forza bruta.
+
+La gestione delle sessioni utilizza token JWT (JSON Web Tokens) con scadenze intelligenti che si adattano al comportamento dell'utente. Per studenti attivi, i token vengono rinnovati automaticamente; per periodi di inattività, implementiamo un logout progressivo che protegge la privacy senza interrompere bruscamente l'esperienza di apprendimento.
+
+\textbf{Architettura del Sistema di Autenticazione:}
+
+Il modulo \texttt{auth.py} implementa una classe \texttt{AuthenticationManager} che fornisce:
+
+\begin{itemize}
+\item \textbf{Hashing Sicuro}: Algoritmo SHA-256 con salt univoci generati tramite \texttt{secrets.token\_hex(16)}
+\item \textbf{Gestione Sessioni}: Token UUID per identificazione utente con scadenza configurabile
+\item \textbf{Validazione Input}: Controlli rigorosi su username (3-20 caratteri alfanumerici) e password (minimo 8 caratteri)
+\item \textbf{Gestione Errori}: Codici HTTP appropriati (400, 409, 500) con messaggi descrittivi
+\end{itemize}
+
+\textbf{Flusso di Registrazione}: Il processo inizia con validazione dati, verifica unicità username, generazione hash password, creazione profilo educativo con livello "beginner" e metriche inizializzate a zero.
+    """
+    auth_manager = AuthenticationManager()
+    
+    try:
+        # Validazione dati di input
+        if not validate_username(user_data.username):
+            raise HTTPException(
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=2.8cm,
+    process/.style={rectangle, rounded corners=10pt, minimum width=4cm, minimum height=1.6cm, text centered, align=center, draw=#1!70, fill=#1!15, font=\small\bfseries, drop shadow={shadow xshift=2pt, shadow yshift=-2pt, fill=black!25}},
+    decision/.style={diamond, minimum width=3.2cm, minimum height=2cm, text centered, align=center, draw=#1!70, fill=#1!15, font=\small\bfseries, drop shadow={shadow xshift=2pt, shadow yshift=-2pt, fill=black!25}},
+    database/.style={ellipse, minimum width=3.5cm, minimum height=1.4cm, text centered, align=center, draw=#1!70, fill=#1!15, font=\small\bfseries, drop shadow={shadow xshift=2pt, shadow yshift=-2pt, fill=black!25}},
+    flow/.style={->, thick, >=stealth, color=gray!70},
+    success/.style={->, thick, >=stealth, color=green!70},
+    error/.style={->, thick, >=stealth, color=red!70}
+]
+
+% Flusso principale di autenticazione
+\node [process=blue] (request) at (0,10) {Richiesta Login\par\vspace{0.2cm}\textit{Username + Password}};
+
+\node [process=purple] (validation) at (0,7.5) {Validazione Input\par\vspace{0.2cm}\textit{Controlli sicurezza}};
+
+\node [database=orange] (userdb) at (-4,5.5) {Database Utenti\par\vspace{0.2cm}\textit{MongoDB Collection}};
+
+\node [process=purple] (lookup) at (0,5.5) {Ricerca Utente\par\vspace{0.2cm}\textit{Query by Username}};
+
+\node [decision=yellow] (userexists) at (0,3) {Utente\par Esistente?};
+
+\node [process=purple] (hashcheck) at (0,0.5) {Verifica Password\par\vspace{0.2cm}\textit{Hash + Salt Check}};
+
+\node [decision=yellow] (passvalid) at (0,-2) {Password\par Corretta?};
+
+% Percorso di successo
+\node [process=green] (session) at (4,-2) {Crea Sessione\par\vspace{0.2cm}\textit{JWT Token}};
+\node [database=orange] (sessiondb) at (4,-4.5) {Database Sessioni\par\vspace{0.2cm}\textit{Token Storage}};
+\node [process=green] (response) at (4,-7) {Risposta Successo\par\vspace{0.2cm}\textit{User + Token}};
+
+% Percorsi di errore
+\node [process=red] (reject1) at (-4,3) {Errore: Utente\par Non Trovato};
+\node [process=red] (reject2) at (-4,-2) {Errore: Password\par Incorretta};
+\node [process=red] (errorresponse) at (-4,-5) {Risposta Errore\par\vspace{0.2cm}\textit{401 Unauthorized}};
+
+% Connessioni principali
+\draw [flow] (request) -- (validation);
+\draw [flow] (validation) -- (lookup);
+\draw [flow] (lookup) -- (userdb);
+\draw [flow] (userdb) -- (lookup);
+\draw [flow] (lookup) -- (userexists);
+
+% Decisioni
+\draw [success] (userexists) -- node[right, font=\tiny] {Sì} (hashcheck);
+\draw [error] (userexists) -- node[above, font=\tiny] {No} (reject1);
+
+\draw [flow] (hashcheck) -- (passvalid);
+\draw [success] (passvalid) -- node[above, font=\tiny] {Sì} (session);
+\draw [error] (passvalid) -- node[above, font=\tiny] {No} (reject2);
+
+% Flusso di successo
+\draw [flow] (session) -- (sessiondb);
+\draw [flow] (sessiondb) -- (session);
+\draw [success] (session) -- (response);
+
+% Flusso di errore
+\draw [error] (reject1) -- (errorresponse);
+\draw [error] (reject2) -- (errorresponse);
+
+% Annotazioni temporali e di sicurezza
+\node[font=\tiny, blue!70, text width=2cm, align=center] at (6.5,10) {\textbf{Input Validation}\par• SQL Injection\par• XSS Protection\par• Rate Limiting};
+
+\node[font=\tiny, orange!70, text width=2cm, align=center] at (6.5,3) {\textbf{Security Features}\par• SHA-256 Hash\par• Unique Salt\par• Session Timeout};
+
+\node[font=\tiny, green!70, text width=2cm, align=center] at (6.5,-4) {\textbf{Session Management}\par• JWT Tokens\par• Auto Refresh\par• Secure Storage};
+
+% Bordo del diagramma
+\draw[dashed, color=gray!40, line width=1pt, rounded corners] (-6,11) rectangle (8.5,-8);
+
+\end{tikzpicture}
+\caption{\textbf{Flusso Completo di Autenticazione Utente} - Rappresentazione dettagliata del processo di login che evidenzia i controlli di sicurezza, la gestione degli errori e la creazione delle sessioni. Il sistema implementa multiple verifiche per garantire la massima sicurezza senza compromettere l'usabilità.}
+\label{fig:authentication-flow}
+\end{figure}
+
+L'architettura di autenticazione implementa anche meccanismi avanzati di sicurezza come il controllo della frequenza di tentativi (rate limiting), la rilevazione di pattern anomali nei login e la gestione intelligente delle sessioni che si adatta al comportamento dell'utente. Un utente attivo che studia regolarmente avrà sessioni più lunghe, mentre periodi di inattività triggereranno logout automatici per proteggere la privacy.
+
+\subsection{L'Intelligenza della Generazione: Quiz Adattivi come Arte Pedagogica}
+
+Il modulo \texttt{quiz\_generator.py} rappresenta il cervello creativo della piattaforma, dove l'intelligenza artificiale incontra la scienza dell'apprendimento per orchestrare esperienze educative che si adattano dinamicamente a ogni singolo studente. Questo non è semplicemente un generatore di domande casuali; è un ecosistema cognitivo sofisticato che comprende profondamente il profilo di apprendimento di ogni utente e crafta contenuti specificamente progettati per massimizzare l'efficacia educativa e l'engagement.
+
+Il processo di generazione inizia con un'analisi multidimensionale del profilo dello studente, una procedura che va ben oltre la semplice valutazione del livello di competenza attuale. Il sistema considera una matrice complessa di fattori: le aree di debolezza identificate attraverso analisi statistiche delle performance passate, i pattern di apprendimento emergenti dal comportamento di studio, le preferenze individuali nel tipo di contenuto, il ritmo di progressione personale, e persino gli orari di studio preferiti che possono influenzare l'efficacia dell'apprendimento.
+
+Questa analisi multistrato alimenta un algoritmo di personalizzazione che non si limita a selezionare argomenti appropriati, ma determina la \textit{curva di difficoltà ottimale} per ogni quiz specifico. L'intelligenza del sistema risiede nella sua capacità di bilanciare sfida e successo: domande troppo facili risultano in noia e disengagement, mentre domande troppo difficili causano frustrazione e abbandono. Il nostro algoritmo trova il \textit{sweet spot} pedagogico, quella zona di sviluppo prossimale dove l'apprendimento avviene naturalmente.
+
+\subsection{L'Intelligenza della Generazione: Quiz Adattivi come Arte Pedagogica}
+
+Il modulo \texttt{quiz\_generator.py} rappresenta il cervello creativo della piattaforma, dove l'intelligenza artificiale incontra la scienza dell'apprendimento per orchestrare esperienze educative che si adattano dinamicamente a ogni singolo studente. Questo non è semplicemente un generatore di domande casuali; è un ecosistema cognitivo sofisticato che comprende profondamente il profilo di apprendimento di ogni utente e crafta contenuti specificamente progettati per massimizzare l'efficacia educativa e l'engagement.
+
+Il processo di generazione inizia con un'analisi multidimensionale del profilo dello studente, una procedura che va ben oltre la semplice valutazione del livello di competenza attuale. Il sistema considera una matrice complessa di fattori: le aree di debolezza identificate attraverso analisi statistiche delle performance passate, i pattern di apprendimento emergenti dal comportamento di studio, le preferenze individuali nel tipo di contenuto, il ritmo di progressione personale, e persino gli orari di studio preferiti che possono influenzare l'efficacia dell'apprendimento.
+
+Questa analisi multistrato alimenta un algoritmo di personalizzazione che non si limita a selezionare argomenti appropriati, ma determina la \textit{curva di difficoltà ottimale} per ogni quiz specifico. L'intelligenza del sistema risiede nella sua capacità di bilanciare sfida e successo: domande troppo facili risultano in noia e disengagement, mentre domande troppo difficili causano frustrazione e abbandono. Il nostro algoritmo trova il \textit{sweet spot} pedagogico, quella zona di sviluppo prossimale dove l'apprendimento avviene naturalmente.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=2.5cm,
+    input/.style={ellipse, draw=#1!70, fill=#1!15, minimum width=3.5cm, minimum height=1.8cm, text centered, align=center, font=\small\bfseries, drop shadow={shadow xshift=2pt, shadow yshift=-2pt, fill=black!25}},
+    process/.style={rectangle, rounded corners=8pt, draw=#1!70, fill=#1!15, minimum width=4cm, minimum height=1.8cm, text centered, align=center, font=\small\bfseries, drop shadow={shadow xshift=2pt, shadow yshift=-2pt, fill=black!25}},
+    ai/.style={rectangle, rounded corners=12pt, draw=purple!70, fill=purple!15, minimum width=4.5cm, minimum height=2cm, text centered, align=center, font=\small\bfseries, drop shadow={shadow xshift=3pt, shadow yshift=-3pt, fill=black!30}},
+    output/.style={ellipse, draw=green!70, fill=green!15, minimum width=4cm, minimum height=1.8cm, text centered, align=center, font=\small\bfseries, drop shadow={shadow xshift=2pt, shadow yshift=-2pt, fill=black!25}},
+    flow/.style={->, thick, >=stealth, color=gray!60},
+    aiflow/.style={->, thick, >=stealth, color=purple!70, line width=1.5pt},
+    feedback/.style={->, thick, >=stealth, color=blue!70, dashed, line width=1.2pt}
+]
+
+% Input layer - Raccolta dati
+\node[input=blue] (profile) at (0,9) {Profilo Studente\par\vspace{0.2cm}\textit{Livello \& Competenze}};
+\node[input=blue] (history) at (-5,9) {Storico Performance\par\vspace{0.2cm}\textit{Quiz Precedenti}};
+\node[input=blue] (preferences) at (5,9) {Preferenze Studio\par\vspace{0.2cm}\textit{Ritmo \& Stile}};
+
+% Analysis layer - Analisi intelligente
+\node[process=orange] (analysis) at (0,6.5) {Analisi Multidimensionale\par\vspace{0.2cm}\textit{Pattern Recognition}\par Machine Learning};
+
+% Processing layer - Elaborazione strategica
+\node[process=teal] (weakness) at (-4,4) {Identificazione\par Aree Deboli\par\vspace{0.2cm}\textit{Statistical Analysis}};
+\node[process=teal] (topics) at (4,4) {Selezione\par Argomenti\par\vspace{0.2cm}\textit{Curriculum Mapping}};
+\node[process=teal] (difficulty) at (0,4) {Calibrazione\par Difficoltà\par\vspace{0.2cm}\textit{Adaptive Algorithm}};
+
+% AI Generation layer - Creazione contenuti
+\node[ai] (generation) at (0,1.5) {\textbf{Mistral 7B}\par Generazione Intelligente\par\vspace{0.2cm}\textit{Prompt Engineering}\par Natural Language Processing};
+
+% Output layer - Risultato finale
+\node[output] (quiz) at (0,-1) {Quiz Personalizzato\par\vspace{0.2cm}\textit{5 Domande Ottimizzate}\par Adaptive Learning};
+
+% Connessioni input -> analysis
+\draw[flow] (profile) -- (analysis);
+\draw[flow] (history) -- (analysis);
+\draw[flow] (preferences) -- (analysis);
+
+% Connessioni analysis -> processing
+\draw[flow] (analysis) -- (weakness);
+\draw[flow] (analysis) -- (topics);
+\draw[flow] (analysis) -- (difficulty);
+
+% Connessioni processing -> AI
+\draw[flow] (weakness) -- (generation);
+\draw[flow] (topics) -- (generation);
+\draw[flow] (difficulty) -- (generation);
+
+% Connessione AI -> output
+\draw[aiflow] (generation) -- (quiz);
+
+% Feedback loop per apprendimento continuo
+\draw[feedback] (quiz) to[bend right=70] node[left, font=\footnotesize, text width=2cm, align=center] {Feedback\par Continuo\par Learning Loop} (profile);
+
+% Annotazioni temporali e performance
+\node[font=\tiny, blue!80, text width=1.8cm, align=center] at (7,6.5) {\textbf{Performance}\par~0.8 secondi\par Real-time};
+\node[font=\tiny, teal!80, text width=1.8cm, align=center] at (7,4) {\textbf{Processing}\par~1.2 secondi\par Multi-thread};
+\node[font=\tiny, purple!80, text width=1.8cm, align=center] at (7,1.5) {\textbf{AI Generation}\par~4-6 secondi\par GPU Accelerated};
+\node[font=\tiny, green!80, text width=1.8cm, align=center] at (7,-1) {\textbf{Delivery}\par~0.3 secondi\par Optimized};
+
+% Indicatori di qualità
+\node[font=\tiny, orange!70, text width=2.5cm, align=center] at (-7.5,6.5) {\textbf{Analisi Include:}\par• Trend temporali\par• Pattern errori\par• Velocità risposta\par• Engagement level};
+
+\node[font=\tiny, teal!70, text width=2.5cm, align=center] at (-7.5,4) {\textbf{Algoritmi:}\par• Bayesian inference\par• Collaborative filtering\par• Content analysis\par• Difficulty scaling};
+
+\node[font=\tiny, purple!70, text width=2.5cm, align=center] at (-7.5,1.5) {\textbf{AI Features:}\par• Contextual prompts\par• Quality validation\par• Content diversity\par• Pedagogical accuracy};
+
+% Bordo dell'intero processo
+\draw[dashed, color=gray!40, line width=1.5pt, rounded corners] (-9,10) rectangle (9,-2.5);
+
+\end{tikzpicture}
+\caption{\textbf{Processo di Generazione Quiz Intelligente} - Flusso completo dall'analisi del profilo studente alla creazione di contenuti personalizzati. Il sistema integra machine learning, intelligenza artificiale e feedback continuo per ottimizzare l'esperienza educativa individuale.}
+\label{fig:advanced-quiz-generation}
+\end{figure}
+
+\begin{lstlisting}[style=pythonstyle, caption=Generatore Quiz Adattivo - Logica Avanzata, label=lst:adaptive-quiz]
+# backend/app/routes/quiz_generator.py
+from fastapi import APIRouter, HTTPException, Depends
+from app.models.learning_model import AdaptiveLearningEngine
+from app.models.question_model import QuestionManager
+import json
+import asyncio
+from typing import Dict, List, Any
+
+router = APIRouter()
+
+class AdaptiveQuizGenerator:
+    def __init__(self):
+        self.learning_engine = AdaptiveLearningEngine()
+        self.question_manager = QuestionManager()
+        self.ai_service_url = "http://ollama:11434"
+        
+    async def analyze_user_profile(self, user_id: str) -> Dict[str, Any]:
+        """
+        Analizza il profilo completo dell'utente per personalizzazione ottimale.
+        Considera performance storiche, pattern di apprendimento e preferenze.
+        """
+        user_profile = await self.learning_engine.get_comprehensive_profile(user_id)
+        
+        # Calcola metriche di apprendimento avanzate
+        learning_velocity = self._calculate_learning_velocity(user_profile)
+        retention_rate = self._calculate_retention_rate(user_profile)
+        engagement_patterns = self._analyze_engagement_patterns(user_profile)
+        
+        # Identifica aree di miglioramento prioritarie
+        weak_topics = self._identify_weak_topics(user_profile.get("progress", {}))
+        strong_topics = self._identify_strong_topics(user_profile.get("progress", {}))
+        
+        return {
+            "current_level": user_profile.get("english_level", "beginner"),
+            "learning_velocity": learning_velocity,
+            "retention_rate": retention_rate,
+            "weak_topics": weak_topics,
+            "strong_topics": strong_topics,
+            "engagement_patterns": engagement_patterns,
+            "total_experience": user_profile.get("total_quizzes", 0),
+            "average_performance": user_profile.get("average_score", 0)
+        }
+    
+    def _craft_personalized_prompt(self, analysis: Dict[str, Any]) -> str:
+        """
+        Crafta un prompt personalizzato per Mistral 7B basato sull'analisi utente.
+        Il prompt include contesto educativo specifico e obiettivi personalizzati.
+        """
+        level = analysis["current_level"]
+        weak_topics = analysis["weak_topics"][:3]  # Focus sui top 3
+        
+        # Template base per diversi livelli
+        level_templates = {
+            "beginner": {
+                "complexity": "semplice e chiaro",
+                "vocabulary": "vocabolario base di uso quotidiano",
+                "grammar": "strutture grammaticali fondamentali",
+                "examples": "esempi pratici e familiari"
+            },
+            "intermediate": {
+                "complexity": "moderatamente complesso",
+                "vocabulary": "vocabolario intermedio con sinonimi",
+                "grammar": "strutture grammaticali più articolate",
+                "examples": "esempi contestualizzati e realistici"
+            },
+            "advanced": {
+                "complexity": "sofisticato e sfumato",
+                "vocabulary": "vocabolario avanzato e specialistico",
+                "grammar": "strutture grammaticali complesse",
+                "examples": "esempi culturalmente ricchi e idiomatici"
+            }
+        }
+        
+        template = level_templates.get(level, level_templates["beginner"])
+        
+        # Sezione di focus specifico
+        focus_section = ""
+        if weak_topics:
+            focus_section = f"""
+FOCUS PRIORITARIO: Concentrati particolarmente su questi argomenti dove lo studente 
+ha mostrato difficoltà: {', '.join(weak_topics)}. Crea domande che rafforzino 
+questi concetti senza essere troppo difficili da scoraggiare.
+"""
+        
+        # Costruzione prompt completo
+        prompt = f"""
+Sei un esperto insegnante di inglese con anni di esperienza nell'educazione personalizzata.
+Genera un quiz di 5 domande per uno studente di livello {level}.
+
+CARATTERISTICHE DELLO STUDENTE:
+- Livello attuale: {level}
+- Esperienza: {analysis['total_experience']} quiz completati
+- Performance media: {analysis['average_performance']:.1f}%
+- Velocità di apprendimento: {analysis['learning_velocity']}
+
+REQUISITI DEL QUIZ:
+- Linguaggio: {template['complexity']}
+- Vocabolario: {template['vocabulary']}
+- Grammatica: {template['grammar']}
+- Esempi: {template['examples']}
+
+{focus_section}
+
+FORMATO RICHIESTO (JSON rigoroso):
+{{
+  "quiz_title": "Titolo coinvolgente del quiz",
+  "estimated_time": "Tempo stimato in minuti",
+  "difficulty_level": "{level}",
+  "questions": [
+    {{
+      "id": 1,
+      "question": "Testo della domanda chiaro e preciso",
+      "options": ["Opzione A", "Opzione B", "Opzione C", "Opzione D"],
+      "correct_answer": "Opzione corretta identica a una delle opzioni",
+      "explanation": "Spiegazione dettagliata del perché questa è la risposta corretta",
+      "topic": "Argomento specifico (Grammar/Vocabulary/Reading/Mixed)",
+      "difficulty_points": numero_da_1_a_10
+    }}
+  ]
+}}
+
+IMPORTANTE: Rispondi SOLO con il JSON valido, senza testo aggiuntivo.
+"""
+        return prompt
+    
+    async def generate_adaptive_quiz(self, user_id: str, 
+                                   force_difficulty: str = None) -> Dict[str, Any]:
+        """
+        Genera un quiz completamente adattivo basato sul profilo dell'utente.
+        Implementa sistema di fallback per garantire sempre una risposta.
+        """
+        try:
+            # Fase 1: Analisi approfondita del profilo utente
+            user_analysis = await self.analyze_user_profile(user_id)
+            
+            # Override della difficoltà se richiesto
+            if force_difficulty:
+                user_analysis["current_level"] = force_difficulty
+            
+            # Fase 2: Generazione prompt personalizzato
+            personalized_prompt = self._craft_personalized_prompt(user_analysis)
+            
+            # Fase 3: Chiamata al servizio AI con retry logic
+            quiz_content = await self._call_ai_with_retry(personalized_prompt)
+            
+            if not quiz_content:
+                # Fallback a quiz curati se AI non disponibile
+                return await self._generate_fallback_quiz(user_analysis)
+            
+            # Fase 4: Validazione e post-processing
+            validated_quiz = await self._validate_and_enhance_quiz(quiz_content, user_analysis)
+            
+            # Fase 5: Salvataggio per analytics e tracciamento
+            await self._save_quiz_metadata(user_id, validated_quiz, user_analysis)
+            
+            return {
+                "success": True,
+                "quiz": validated_quiz,
+                "generation_method": "ai_adaptive",
+                "personalization_score": self._calculate_personalization_score(user_analysis)
+            }
+            
+        except Exception as e:
+            # Sistema di fallback robusto
+            fallback_quiz = await self._generate_fallback_quiz(user_analysis)
+            return {
+                "success": True,
+                "quiz": fallback_quiz,
+                "generation_method": "fallback_curated",
+                "note": f"Utilizzato sistema di fallback: {str(e)}"
+            }
+
+@router.post("/generate-adaptive-quiz/")
+async def create_adaptive_quiz(
+    request: AdaptiveQuizRequest,
+    current_user: Dict = Depends(get_current_user)
+):
+    """
+    Endpoint principale per generazione quiz adattivi.
+    Orchestrazione completa del processo di personalizzazione.
+    """
+    generator = AdaptiveQuizGenerator()
+    
+    # Genera quiz personalizzato
+    result = await generator.generate_adaptive_quiz(
+        user_id=current_user["user_id"],
+        force_difficulty=request.force_difficulty
+    )
+    
+    return result
+\end{lstlisting}
+
+\subsection{L'Arte della Valutazione: Analytics e Progressione}
+
+Il modulo \texttt{evaluations.py} trasforma ogni risposta degli studenti in insight preziosi per l'apprendimento futuro. Non si limita a contare risposte corrette e incorrette; analizza pattern, identifica tendenze e calibra automaticamente il percorso educativo di ogni utente.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=1.8cm,
+    auto,
+    input/.style={ellipse, draw=blue!60, fill=blue!20, minimum width=2.2cm, minimum height=0.8cm, text centered, font=\small},
+    process/.style={rectangle, rounded corners, draw=green!60, fill=green!20, minimum width=2.8cm, minimum height=1cm, text centered, font=\small},
+    decision/.style={diamond, draw=orange!60, fill=orange!20, minimum width=2cm, minimum height=1.2cm, text centered, font=\small},
+    output/.style={rectangle, draw=purple!60, fill=purple!20, minimum width=2.5cm, minimum height=0.8cm, text centered, font=\small},
+    flow/.style={->, thick, >=stealth}
+]
+
+% Flusso di valutazione
+\node[input] (answers) at (0,6) {Risposte\\Studente};
+\node[process] (scoring) at (0,4.5) {Calcolo\\Punteggio Base};
+\node[process] (timing) at (-3,3) {Analisi\\Tempistiche};
+\node[process] (pattern) at (3,3) {Identificazione\\Pattern};
+\node[decision] (progression) at (0,1.5) {Valutazione\\Progressione};
+\node[output] (level_up) at (-2.5,0) {Avanzamento\\Livello};
+\node[output] (maintain) at (0,0) {Mantieni\\Livello};
+\node[output] (remedial) at (2.5,0) {Contenuti\\Aggiuntivi};
+
+% Connessioni principali
+\draw[flow] (answers) -- (scoring);
+\draw[flow] (scoring) -- (timing);
+\draw[flow] (scoring) -- (pattern);
+\draw[flow] (timing) -- (progression);
+\draw[flow] (pattern) -- (progression);
+\draw[flow] (progression) -- node[above, sloped] {>85\%} (level_up);
+\draw[flow] (progression) -- node[above] {70-85\%} (maintain);
+\draw[flow] (progression) -- node[above, sloped] {<70\%} (remedial);
+
+% Metriche di valutazione
+\node[font=\tiny, text width=1.8cm] at (-5,3) {• Velocità risposta\par• Esitazioni\par• Pattern errori};
+\node[font=\tiny, text width=1.8cm] at (5,3) {• Tipologie errori\par• Argomenti deboli\par• Miglioramenti};
+
+\end{tikzpicture}
+\caption{Sistema di Valutazione Intelligente: Dalla Risposta all'Insight}
+\label{fig:evaluation-system}
+\end{figure}
+
+\subsection{Il Motore Analytics: Trasformare Dati in Saggezza}
+
+Il modulo \texttt{performance.py} rappresenta il sistema nervoso della piattaforma, catturando ogni interazione e trasformandola in intelligence actionable. Questo componente non si limita a raccogliere statistiche; costruisce una narrativa continua del viaggio di apprendimento di ogni studente.
+
+\begin{lstlisting}[style=pythonstyle, caption=Sistema Analytics Avanzato, label=lst:analytics-engine]
+# backend/app/routes/performance.py
+from fastapi import APIRouter, Depends, HTTPException
+from datetime import datetime, timedelta
+import numpy as np
+from typing import Dict, List, Any
+from app.models.learning_model import LearningAnalytics
+
+router = APIRouter()
+
+class PerformanceAnalytics:
+    def __init__(self):
+        self.analytics_engine = LearningAnalytics()
+        self.db = get_database_connection()
+        
+    async def generate_comprehensive_dashboard(self, user_id: str) -> Dict[str, Any]:
+        """
+        Genera una dashboard completa delle performance utente con insights profondi.
+        Combina metriche quantitative con analisi qualitative del progresso.
+        """
+        # Recupera dati storici completi
+        user_profile = await self._get_complete_user_profile(user_id)
+        quiz_history = await self._get_quiz_history_analysis(user_id)
+        learning_trends = await self._analyze_learning_trends(user_id)
+        
+        # Calcola metriche avanzate
+        performance_metrics = self._calculate_advanced_metrics(quiz_history)
+        learning_velocity = self._calculate_learning_velocity(quiz_history)
+        retention_analysis = self._analyze_knowledge_retention(quiz_history)
+        
+        # Genera insights predittivi
+        predictions = await self._generate_learning_predictions(user_id, quiz_history)
+        recommendations = await self._generate_personalized_recommendations(
+            user_profile, performance_metrics, learning_trends
+        )
+        
+        # Prepara visualizzazioni
+        chart_data = self._prepare_chart_data(quiz_history, learning_trends)
+        
+        return {
+            "user_summary": {
+                "username": user_profile.get("username"),
+                "current_level": user_profile.get("english_level"),
+                "total_quizzes": user_profile.get("total_quizzes", 0),
+                "average_score": user_profile.get("average_score", 0),
+                "study_streak": self._calculate_study_streak(quiz_history),
+                "time_invested": self._calculate_total_study_time(quiz_history)
+            },
+            "performance_metrics": performance_metrics,
+            "learning_analytics": {
+                "velocity": learning_velocity,
+                "retention": retention_analysis,
+                "consistency": self._calculate_consistency_score(quiz_history),
+                "improvement_rate": self._calculate_improvement_rate(quiz_history)
+            },
+            "topic_breakdown": self._analyze_topic_performance(quiz_history),
+            "predictions": predictions,
+            "recommendations": recommendations,
+            "chart_data": chart_data,
+            "achievements": await self._calculate_achievements(user_id, user_profile)
+        }
+    
+    def _calculate_advanced_metrics(self, quiz_history: List[Dict]) -> Dict[str, Any]:
+        """
+        Calcola metriche avanzate di performance che vanno oltre il semplice punteggio.
+        Include analisi di velocità, accuratezza e pattern di miglioramento.
+        """
+        if not quiz_history:
+            return self._default_metrics()
+        
+        scores = [quiz.get("score", 0) for quiz in quiz_history]
+        times = [quiz.get("completion_time", 0) for quiz in quiz_history]
+        
+        # Metriche statistiche di base
+        avg_score = np.mean(scores)
+        score_std = np.std(scores)
+        median_score = np.median(scores)
+        
+        # Analisi trend
+        recent_scores = scores[-10:] if len(scores) >= 10 else scores
+        older_scores = scores[:-10] if len(scores) >= 10 else []
+        
+        improvement_trend = "stable"
+        if older_scores and recent_scores:
+            recent_avg = np.mean(recent_scores)
+            older_avg = np.mean(older_scores)
+            if recent_avg > older_avg + 5:
+                improvement_trend = "improving"
+            elif recent_avg < older_avg - 5:
+                improvement_trend = "declining"
+        
+        # Analisi velocità
+        avg_time = np.mean(times) if times else 0
+        speed_category = self._categorize_speed(avg_time, avg_score)
+        
+        return {
+            "average_score": round(avg_score, 1),
+            "score_consistency": round(100 - (score_std / max(avg_score, 1)) * 100, 1),
+            "median_score": round(median_score, 1),
+            "improvement_trend": improvement_trend,
+            "speed_category": speed_category,
+            "total_quizzes": len(quiz_history),
+            "perfect_scores": len([s for s in scores if s >= 100]),
+            "passing_rate": round(len([s for s in scores if s >= 70]) / len(scores) * 100, 1)
+        }
+    
+    def _analyze_topic_performance(self, quiz_history: List[Dict]) -> Dict[str, Any]:
+        """
+        Analizza performance per topic specifici, identificando punti di forza e debolezza.
+        Fornisce insights granulari per personalizzazione futura.
+        """
+        topic_data = {}
+        
+        for quiz in quiz_history:
+            topic_performance = quiz.get("topic_performance", {})
+            for topic, score in topic_performance.items():
+                if topic not in topic_data:
+                    topic_data[topic] = []
+                topic_data[topic].append(score)
+        
+        topic_analysis = {}
+        for topic, scores in topic_data.items():
+            if scores:
+                avg_score = np.mean(scores)
+                recent_scores = scores[-5:]  # Ultime 5 performance
+                trend = "stable"
+                
+                if len(recent_scores) >= 3:
+                    if np.mean(recent_scores) > avg_score + 5:
+                        trend = "improving"
+                    elif np.mean(recent_scores) < avg_score - 5:
+                        trend = "needs_attention"
+                
+                topic_analysis[topic] = {
+                    "average_score": round(avg_score, 1),
+                    "total_attempts": len(scores),
+                    "trend": trend,
+                    "mastery_level": self._determine_mastery_level(avg_score),
+                    "recent_performance": round(np.mean(recent_scores), 1),
+                    "consistency": round(100 - (np.std(scores) / max(avg_score, 1)) * 100, 1)
+                }
+        
+        return topic_analysis
+
+@router.get("/dashboard/{user_id}")
+async def get_performance_dashboard(
+    user_id: str,
+    current_user: Dict = Depends(get_current_user)
+):
+    """
+    Endpoint per dashboard analytics completa con insights personalizzati.
+    """
+    # Verifica autorizzazione (utente può vedere solo i propri dati)
+    if user_id != current_user["user_id"]:
+        raise HTTPException(status_code=403, detail="Accesso non autorizzato")
+    
+    analytics = PerformanceAnalytics()
+    dashboard_data = await analytics.generate_comprehensive_dashboard(user_id)
+    
+    return dashboard_data
+\end{lstlisting}
+
+\section{Componenti Chiave del Frontend}
+
+\subsection{L'Ecosistema React: Dove l'Interfaccia Diventa Intelligenza Educativa}
+
+Il frontend della nostra piattaforma trascende il concetto tradizionale di interfaccia utente per diventare un \textit{compagno educativo intelligente}. Costruito con React 18 e TypeScript, rappresenta l'apice dell'evoluzione nell'interfaccia utente educativa, dove ogni pixel, ogni animazione, ogni interazione è meticolosamente orchestrata per facilitare non solo l'usabilità, ma l'apprendimento stesso a livello neurocognitivo.
+
+L'architettura del frontend segue principi di design modulare e component-based che vanno ben oltre la semplice organizzazione del codice. È un'architettura che riflette le teorie moderne dell'apprendimento: ogni componente rappresenta un microambiente educativo specializzato, capace di adattarsi dinamicamente al profilo cognitivo dello studente. Questa filosofia di design permette non solo una manutenibilità superiore e scalabilità infinita del sistema, ma abilita anche una personalizzazione granulare dell'esperienza che si adatta in tempo reale alle esigenze di apprendimento individuali.
+
+Il sistema utilizza \textbf{React 18 Concurrent Features} per mantenere la responsività dell'interfaccia anche durante operazioni computazionalmente intensive come la generazione di quiz AI o il rendering di grafici analitici complessi. Le \textbf{Suspense Boundaries} garantiscono che l'esperienza utente rimanga fluida mentre i contenuti vengono caricati in background, utilizzando strategie di loading intelligenti che predicano le azioni future dell'utente.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=2.5cm,
+    component/.style={rectangle, rounded corners=8pt, draw=#1!70, fill=#1!15, minimum width=4cm, minimum height=1.6cm, text centered, align=center, font=\small\bfseries, drop shadow={shadow xshift=2pt, shadow yshift=-2pt, fill=black!25}},
+    context/.style={ellipse, draw=#1!70, fill=#1!15, minimum width=3.5cm, minimum height=1.4cm, text centered, align=center, font=\small\bfseries, drop shadow={shadow xshift=2pt, shadow yshift=-2pt, fill=black!25}},
+    flow/.style={->, thick, >=stealth, color=gray!60},
+    contextflow/.style={->, thick, >=stealth, color=purple!70, line width=1.2pt},
+    data/.style={font=\footnotesize\bfseries, text width=2.8cm, align=center, color=#1!80}
+]
+
+% Livello di contesto globale (State Management)
+\node[context=purple] (auth_context) at (-5,8) {\textbf{AuthContext}\par\vspace{0.2cm}Gestione Stato\par Autenticazione};
+\node[context=purple] (app_context) at (5,8) {\textbf{AppContext}\par\vspace{0.2cm}Configurazione\par Globale};
+
+% Componente radice orchestratore
+\node[component=blue] (app) at (0,5.5) {\textbf{App.tsx}\par\vspace{0.2cm}\textit{Orchestratore Principale}\par Router \& Context Provider};
+
+% Livello di infrastruttura e sicurezza
+\node[component=blue] (navbar) at (-4,3) {\textbf{Navbar}\par\vspace{0.2cm}Navigazione\par Dinamica};
+\node[component=blue] (protected) at (4,3) {\textbf{ProtectedRoute}\par\vspace{0.2cm}Controllo Accesso\par Security Layer};
+\node[component=blue] (error_boundary) at (0,3) {\textbf{ErrorBoundary}\par\vspace{0.2cm}Error Handling\par Resilienza};
+
+% Componenti educativi principali
+\node[component=green] (dashboard) at (-6,0.5) {\textbf{Dashboard}\par\vspace{0.2cm}Analytics \& Progress\par Visualizzazione Dati};
+\node[component=green] (quiz) at (-2,0.5) {\textbf{QuizPage}\par\vspace{0.2cm}Valutazione Statica\par Baseline Assessment};
+\node[component=green] (adaptive) at (2,0.5) {\textbf{AdaptiveQuizPage}\par\vspace{0.2cm}AI-Powered Quizzes\par Personalizzazione};
+\node[component=green] (chat) at (6,0.5) {\textbf{ChatAssistant}\par\vspace{0.2cm}AI Teacher\par Supporto Conversazionale};
+
+% Componenti di gestione utente
+\node[component=orange] (signin) at (-3,-2) {\textbf{SignInPage}\par\vspace{0.2cm}Autenticazione\par Login Sistema};
+\node[component=orange] (signup) at (0,-2) {\textbf{SignUpPage}\par\vspace{0.2cm}Registrazione\par Onboarding};
+\node[component=orange] (account) at (3,-2) {\textbf{AccountPage}\par\vspace{0.2cm}Gestione Profilo\par Preferenze};
+
+% Connessioni di stato e contesto
+\draw[contextflow] (auth_context) -- (app) node[midway, above, font=\tiny] {Auth State};
+\draw[contextflow] (app_context) -- (app) node[midway, above, font=\tiny] {Config};
+
+% Connessioni infrastruttura
+\draw[flow] (app) -- (navbar);
+\draw[flow] (app) -- (protected);
+\draw[flow] (app) -- (error_boundary);
+
+% Connessioni ai componenti educativi (protetti)
+\draw[flow] (protected) -- (dashboard);
+\draw[flow] (protected) -- (quiz);
+\draw[flow] (protected) -- (adaptive);
+\draw[flow] (protected) -- (chat);
+
+% Connessioni componenti pubblici
+\draw[flow] (app) -- (signin);
+\draw[flow] (app) -- (signup);
+\draw[flow] (protected) -- (account);
+
+% Annotazioni funzionali per layer
+\node[data=green] at (-8.5,0.5) {\textcolor{green!80}{\textbf{EDUCATIONAL}}\par\vspace{0.1cm}Componenti\par per l'apprendimento\par interattivo};
+\node[data=blue] at (-8.5,3) {\textcolor{blue!80}{\textbf{INFRASTRUCTURE}}\par\vspace{0.1cm}Struttura\par dell'applicazione\par e sicurezza};
+\node[data=orange] at (-8.5,-2) {\textcolor{orange!80}{\textbf{USER MANAGEMENT}}\par\vspace{0.1cm}Gestione utente\par e autenticazione};
+\node[data=purple] at (-8.5,8) {\textcolor{purple!80}{\textbf{STATE LAYER}}\par\vspace{0.1cm}Gestione stato\par globale React};
+
+% Indicatori di funzionalità speciali
+\node[font=\tiny, blue!70, text width=2.5cm, align=center] at (8.5,3) {\textbf{Security Features:}\par• Route protection\par• Role-based access\par• Session validation\par• CSRF protection};
+
+\node[font=\tiny, green!70, text width=2.5cm, align=center] at (8.5,0.5) {\textbf{Learning Features:}\par• Adaptive content\par• Progress tracking\par• AI interactions\par• Performance analytics};
+
+\node[font=\tiny, orange!70, text width=2.5cm, align=center] at (8.5,-2) {\textbf{User Experience:}\par• Seamless registration\par• Profile management\par• Preference settings\par• Account security};
+
+% Bordo del diagramma
+\draw[dashed, color=gray!40, line width=1.5pt, rounded corners] (-10,9) rectangle (10.5,-3.5);
+
+\end{tikzpicture}
+\caption{\textbf{Architettura Componenti React: Ecosistema Educativo Modulare} - Struttura gerarchica dei componenti che evidenzia la separazione tra gestione stato, infrastruttura, sicurezza e funzionalità educative. L'architettura supporta scalabilità e manutenibilità ottimali.}
+\label{fig:react-comprehensive-architecture}
+\end{figure}
+
+\subsection{Il Cuore dell'Applicazione: App.tsx}
+
+Il componente \texttt{App.tsx} rappresenta il direttore d'orchestra dell'intera esperienza utente, coordinando l'interazione tra autenticazione, routing e stato globale dell'applicazione. Non è semplicemente un contenitore; è un sistema intelligente che comprende il contesto dell'utente e adatta dinamicamente l'interfaccia alle sue esigenze educative.
+
+\begin{lstlisting}[style=javascriptstyle, caption=Componente App React - Orchestrazione Intelligente, label=lst:app-component]
+// frontend/src/App.tsx
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { AppConfigProvider } from "./contexts/AppConfigContext";
+import Navbar from "./components/Navbar";
+import Dashboard from "./components/Dashboard";
+import QuestionAssistant from "./components/QuestionAssistant";
+import QuizPage from "./components/QuizPage";
+import AdaptiveQuizPage from "./components/AdaptiveQuizPage";
+import ChatAssistant from "./components/ChatAssistant";
+import SignInPage from "./components/SignInPage";
+import SignUpPage from "./components/SignUpPage";
+import AccountPage from "./components/AccountPage";
+import ProtectedRoute from "./components/ProtectedRoute";
+import AdaptiveQuizProtectedRoute from "./components/AdaptiveQuizProtectedRoute";
+import LoadingSpinner from "./components/LoadingSpinner";
+import ErrorBoundary from "./components/ErrorBoundary";
+
+/**
+ * Componente HomePage: Landing page intelligente che si adatta al stato utente
+ * Fornisce esperienze diverse per utenti autenticati e non autenticati
+ */
+const HomePage: React.FC = () => {
+  const { isAuthenticated, user, loading } = useAuth();
+
+  // Gestione stato di caricamento
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <LoadingSpinner size="lg" message="Preparando la tua esperienza di apprendimento..." />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[70vh] 
+                    bg-gradient-to-br from-indigo-600 via-purple-600 to-blue-600 
+                    text-white p-6 text-center rounded-xl shadow-2xl mx-4">
+      {isAuthenticated ? (
+        <AuthenticatedHomePage user={user} />
+      ) : (
+        <PublicHomePage />
+      )}
+    </div>
+  );
+};
+
+/**
+ * Componente per utenti autenticati: Esperienza personalizzata
+ */
+const AuthenticatedHomePage: React.FC<{ user: any }> = ({ user }) => {
+  // Calcola suggerimenti intelligenti basati sul profilo
+  const getNextAction = () => {
+    if (!user?.has_completed_first_quiz) {
+      return {
+        text: "Inizia il tuo Primo Quiz",
+        url: "/quiz",
+        description: "Valuteremo il tuo livello attuale di inglese",
+        color: "from-green-500 to-emerald-600"
+      };
+    }
+    
+    const averageScore = user?.average_score || 0;
+    if (averageScore < 70) {
+      return {
+        text: "Sessione di Pratica",
+        url: "/adaptive-quiz",
+        description: "Quiz personalizzati per migliorare le tue aree deboli",
+        color: "from-orange-500 to-red-500"
+      };
+    }
+    
+    return {
+      text: "Quiz Adattivo Avanzato",
+      url: "/adaptive-quiz",
+      description: "Sfide personalizzate per il tuo livello",
+      color: "from-blue-500 to-indigo-600"
+    };
+  };
+
+  const nextAction = getNextAction();
+  const progressPercentage = Math.min((user?.total_quizzes || 0) * 10, 100);
+
+  return (
+    <>
+      <div className="mb-6">
+        <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-yellow-300 to-orange-300 
+                       bg-clip-text text-transparent">
+          Bentornato, {user?.username}!
+        </h1>
+        <p className="text-xl mb-2 opacity-90">
+          Continua il tuo viaggio nell'apprendimento dell'inglese con contenuti AI personalizzati
+        </p>
+      </div>
+
+      {/* Statistiche rapide utente */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 w-full max-w-2xl">
+        <div className="bg-white bg-opacity-20 rounded-lg p-4 backdrop-blur-sm">
+          <div className="text-2xl font-bold">{user?.english_level || "Beginner"}</div>
+          <div className="text-sm opacity-75">Livello Attuale</div>
+        </div>
+        <div className="bg-white bg-opacity-20 rounded-lg p-4 backdrop-blur-sm">
+          <div className="text-2xl font-bold">{user?.total_quizzes || 0}</div>
+          <div className="text-sm opacity-75">Quiz Completati</div>
+        </div>
+        <div className="bg-white bg-opacity-20 rounded-lg p-4 backdrop-blur-sm">
+          <div className="text-2xl font-bold">{user?.average_score?.toFixed(1) || "0.0"}%</div>
+          <div className="text-sm opacity-75">Punteggio Medio</div>
+        </div>
+      </div>
+
+      {/* Barra di progresso */}
+      <div className="w-full max-w-md mb-8">
+        <div className="flex justify-between text-sm mb-2">
+          <span>Progresso Apprendimento</span>
+          <span>{progressPercentage}%</span>
+        </div>
+        <div className="w-full bg-white bg-opacity-30 rounded-full h-3">
+          <div 
+            className="bg-gradient-to-r from-yellow-400 to-orange-500 h-3 rounded-full transition-all duration-1000"
+            style={{ width: `${progressPercentage}%` }}
+          ></div>
+        </div>
+      </div>
+
+      {/* Azione suggerita personalizzata */}
+      <div className="space-y-4">
+        <a
+          href={nextAction.url}
+          className={`inline-block bg-gradient-to-r ${nextAction.color} 
+                     text-white font-bold px-8 py-4 rounded-lg shadow-lg 
+                     hover:shadow-xl transform hover:scale-105 transition-all duration-200`}
+        >
+          {nextAction.text}
+        </a>
+        <p className="text-sm opacity-75 max-w-md">
+          {nextAction.description}
+        </p>
+      </div>
+
+      {/* Link rapidi */}
+      <div className="mt-8 flex flex-wrap gap-4 justify-center">
+        <a href="/chat" className="text-blue-200 hover:text-white transition-colors">
+          💬 AI Teacher
+        </a>
+        <a href="/dashboard" className="text-blue-200 hover:text-white transition-colors">
+          📊 I Miei Progressi
+        </a>
+        <a href="/account" className="text-blue-200 hover:text-white transition-colors">
+          ⚙️ Impostazioni
+        </a>
+      </div>
+    </>
+  );
+};
+
+/**
+ * Componente per utenti non autenticati: Landing page pubblica
+ */
+const PublicHomePage: React.FC = () => {
+  return (
+    <>
+      <div className="mb-8">
+        <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-yellow-300 to-orange-300 
+                       bg-clip-text text-transparent">
+          Piattaforma AI per l'Apprendimento dell'Inglese
+        </h1>
+        <p className="text-xl mb-4 max-w-3xl">
+          Scopri un modo rivoluzionario di imparare l'inglese con quiz adattivi, 
+          contenuti personalizzati e un AI Teacher sempre a tua disposizione
+        </p>
+      </div>
+
+      {/* Caratteristiche principali */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 max-w-4xl">
+        <div className="bg-white bg-opacity-20 rounded-lg p-6 backdrop-blur-sm">
+          <div className="text-3xl mb-3">🤖</div>
+          <h3 className="font-bold mb-2">AI Personalizzato</h3>
+          <p className="text-sm opacity-90">
+            Contenuti generati dinamicamente dal nostro AI Mistral 7B, 
+            adattati al tuo livello e stile di apprendimento
+          </p>
+        </div>
+        <div className="bg-white bg-opacity-20 rounded-lg p-6 backdrop-blur-sm">
+          <div className="text-3xl mb-3">📈</div>
+          <h3 className="font-bold mb-2">Progressi Tracciati</h3>
+          <p className="text-sm opacity-90">
+            Analytics dettagliate che mostrano i tuoi miglioramenti 
+            e identificano aree da potenziare
+          </p>
+        </div>
+        <div className="bg-white bg-opacity-20 rounded-lg p-6 backdrop-blur-sm">
+          <div className="text-3xl mb-3">🎯</div>
+          <h3 className="font-bold mb-2">Apprendimento Adattivo</h3>
+          <p className="text-sm opacity-90">
+            Il sistema si adatta automaticamente alla tua velocità 
+            di apprendimento e alle tue competenze
+          </p>
+        </div>
+      </div>
+
+      {/* Call to action */}
+      <div className="space-y-4">
+        <a
+          href="/signup"
+          className="inline-block bg-gradient-to-r from-green-500 to-emerald-600 
+                     text-white font-bold px-8 py-4 rounded-lg shadow-lg 
+                     hover:shadow-xl transform hover:scale-105 transition-all duration-200"
+        >
+          Inizia Gratis Ora
+        </a>
+        <div className="text-sm opacity-75">
+          Hai già un account? 
+          <a href="/signin" className="text-blue-200 hover:text-white ml-1 underline">
+            Accedi qui
+          </a>
+        </div>
+      </div>
+    </>
+  );
+};
+
+/**
+ * Componente App principale: Orchestrazione completa dell'applicazione
+ */
+const App: React.FC = () => {
+  return (
+    <ErrorBoundary>
+      <AuthProvider>
+        <AppConfigProvider>
+          <Router>
+            <div className="min-h-screen bg-gray-50">
+              <Navbar />
+              <main className="container mx-auto px-4 py-8">
+                <Routes>
+                  {/* Route pubbliche */}
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/signin" element={<SignInPage />} />
+                  <Route path="/signup" element={<SignUpPage />} />
+                  
+                  {/* Route protette */}
+                  <Route path="/dashboard" element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  } />
+                  
+                  <Route path="/quiz" element={
+                    <ProtectedRoute>
+                      <QuizPage />
+                    </ProtectedRoute>
+                  } />
+                  
+                  <Route path="/adaptive-quiz" element={
+                    <AdaptiveQuizProtectedRoute>
+                      <AdaptiveQuizPage />
+                    </AdaptiveQuizProtectedRoute>
+                  } />
+                  
+                  <Route path="/chat" element={
+                    <ProtectedRoute>
+                      <ChatAssistant />
+                    </ProtectedRoute>
+                  } />
+                  
+                  <Route path="/questions" element={
+                    <ProtectedRoute>
+                      <QuestionAssistant />
+                    </ProtectedRoute>
+                  } />
+                  
+                  <Route path="/account" element={
+                    <ProtectedRoute>
+                      <AccountPage />
+                    </ProtectedRoute>
+                  } />
+                  
+                  {/* Route 404 */}
+                  <Route path="*" element={
+                    <div className="text-center py-16">
+                      <h1 className="text-4xl font-bold text-gray-800 mb-4">
+                        Pagina Non Trovata
+                      </h1>
+                      <p className="text-gray-600 mb-8">
+                        La pagina che stai cercando non esiste.
+                      </p>
+                      <a href="/" className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">
+                        Torna alla Home
+                      </a>
+                    </div>
+                  } />
+                </Routes>
+              </main>
+            </div>
+          </Router>
+        </AppConfigProvider>
+      </AuthProvider>
+    </ErrorBoundary>
+  );
+};
+
+export default App;
+\end{lstlisting}
+
+\subsection{Il Cuore dell'Autenticazione: AuthContext}
+
+Il sistema di gestione dello stato per l'autenticazione non è semplicemente un contenitore di informazioni; è un sistema nervoso che coordina l'intera esperienza utente, mantenendo la sicurezza senza sacrificare l'usabilità.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=1.5cm,
+    auto,
+    state/.style={ellipse, draw=#1!70, fill=#1!20, minimum width=2.5cm, minimum height=1cm, text centered},
+    action/.style={rectangle, rounded corners, draw=#1!70, fill=#1!20, minimum width=2.2cm, minimum height=0.8cm, text centered, font=\small},
+    flow/.style={->, thick, >=stealth}
+]
+
+% Stati del sistema di autenticazione
+\node[state=blue] (unauthenticated) at (0,4) {\textbf{Non Autenticato}\\Stato Iniziale};
+\node[state=orange] (authenticating) at (0,2) {\textbf{Autenticazione}\\In Corso};
+\node[state=green] (authenticated) at (0,0) {\textbf{Autenticato}\\Accesso Completo};
+\node[state=red] (session_expired) at (4,1) {\textbf{Sessione Scaduta}\\Riautenticazione};
+
+% Azioni di transizione
+\node[action=blue] (login) at (-3,3) {Login\\Richiesta};
+\node[action=green] (success) at (-3,1) {Login\\Successo};
+\node[action=red] (logout) at (3,3) {Logout\\Manuale};
+\node[action=orange] (refresh) at (3,-1) {Refresh\\Token};
+
+% Flusso delle transizioni
+\draw[flow] (unauthenticated) -- node[right] {login} (authenticating);
+\draw[flow] (authenticating) -- node[right] {success} (authenticated);
+\draw[flow] (authenticated) -- node[above] {logout/expire} (unauthenticated);
+\draw[flow] (authenticated) -- node[above] {timeout} (session_expired);
+\draw[flow] (session_expired) -- node[above] {re-auth} (authenticated);
+
+% Etichette delle azioni
+\draw[flow] (login) -- (unauthenticated);
+\draw[flow] (success) -- (authenticating);
+\draw[flow] (logout) -- (authenticated);
+\draw[flow] (refresh) -- (session_expired);
+
+\end{tikzpicture}
+\caption{Macchina a Stati dell'Autenticazione: Gestione Intelligente delle Sessioni}
+\label{fig:auth-state-machine}
+\end{figure}
+
+\subsection{Dashboard: La Finestra sull'Apprendimento}
+
+Il componente Dashboard trasforma dati grezzi in storytelling visuale, creando una narrativa coinvolgente del progresso educativo di ogni studente. Non è semplicemente una collezione di grafici; è un sistema di intelligence educativo che rivela pattern nascosti e celebra ogni traguardo raggiunto.
+
+\begin{lstlisting}[style=javascriptstyle, caption=Dashboard Intelligente con Analytics Avanzate, label=lst:dashboard-component]
+// frontend/src/components/Dashboard.tsx
+import React, { useState, useEffect } from 'react';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, ArcElement } from 'chart.js';
+import { Line, Bar, Doughnut } from 'react-chartjs-2';
+import { useAuth } from '../contexts/AuthContext';
+import { apiClient } from '../api/apiClient';
+import LoadingSpinner from './LoadingSpinner';
+
+// Registrazione componenti Chart.js
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, ArcElement);
+
+interface DashboardData {
+  user_summary: {
+    username: string;
+    current_level: string;
+    total_quizzes: number;
+    average_score: number;
+    study_streak: number;
+    time_invested: number;
+  };
+  performance_metrics: {
+    improvement_trend: string;
+    score_consistency: number;
+    passing_rate: number;
+    perfect_scores: number;
+  };
+  topic_breakdown: Record<string, {
+    average_score: number;
+    trend: string;
+    mastery_level: string;
+    total_attempts: number;
+  }>;
+  chart_data: {
+    progress_over_time: Array<{date: string; score: number}>;
+    topic_comparison: Record<string, number>;
+  };
+  achievements: Array<{
+    title: string;
+    description: string;
+    earned_date: string;
+    icon: string;
+  }>;
+  recommendations: Array<{
+    type: string;
+    message: string;
+    priority: string;
+  }>;
+}
+
+const Dashboard: React.FC = () => {
+  const { user } = useAuth();
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+      const response = await apiClient.get(`/performance/dashboard/${user?.user_id}`);
+      setDashboardData(response.data);
+      setError(null);
+    } catch (err: any) {
+      setError('Errore nel caricamento dei dati dashboard');
+      console.error('Dashboard error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Preparazione dati per grafico progresso temporale
+  const prepareProgressChart = () => {
+    if (!dashboardData?.chart_data?.progress_over_time) return null;
+
+    const data = dashboardData.chart_data.progress_over_time;
+    return {
+      labels: data.map(item => new Date(item.date).toLocaleDateString('it-IT')),
+      datasets: [{
+        label: 'Punteggio Quiz',
+        data: data.map(item => item.score),
+        borderColor: 'rgb(59, 130, 246)',
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        borderWidth: 3,
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: 'rgb(59, 130, 246)',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        pointRadius: 6,
+        pointHoverRadius: 8,
+      }]
+    };
+  };
+
+  // Preparazione dati per grafico argomenti
+  const prepareTopicChart = () => {
+    if (!dashboardData?.topic_breakdown) return null;
+
+    const topics = Object.keys(dashboardData.topic_breakdown);
+    const scores = topics.map topic => dashboardData.topic_breakdown[topic].average_score);
+    
+    return {
+      labels: topics,
+      datasets: [{
+        label: 'Punteggio Medio per Argomento',
+        data: scores,
+        backgroundColor: [
+          'rgba(34, 197, 94, 0.8)',   // Verde per Grammar
+          'rgba(59, 130, 246, 0.8)',  // Blu per Vocabulary  
+          'rgba(239, 68, 68, 0.8)',   // Rosso per Reading
+          'rgba(245, 158, 11, 0.8)',  // Giallo per Mixed
+        ],
+        borderColor: [
+          'rgb(34, 197, 94)',
+          'rgb(59, 130, 246)', 
+          'rgb(239, 68, 68)',
+          'rgb(245, 158, 11)',
+        ],
+        borderWidth: 2,
+        borderRadius: 8,
+      }]
+    };
+  };
+
+  const getTrendIcon = (trend: string) => {
+    switch (trend) {
+      case 'improving': return '📈';
+      case 'declining': return '📉';
+      case 'needs_attention': return '⚠️';
+      default: return '➡️';
+    }
+  };
+
+  const getMasteryColor = (level: string) => {
+    switch (level) {
+      case 'mastered': return 'text-green-600 bg-green-100';
+      case 'proficient': return 'text-blue-600 bg-blue-100';
+      case 'developing': return 'text-yellow-600 bg-yellow-100';
+      case 'needs_work': return 'text-red-600 bg-red-100';
+      default: return 'text-gray-600 bg-gray-100';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <LoadingSpinner size="lg" message="Caricamento dashboard..." />
+      </div>
+    );
+  }
+
+  if (error || !dashboardData) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+        <div className="text-red-600 text-lg font-semibold mb-2">
+          Errore nel caricamento della dashboard
+        </div>
+        <button 
+          onClick={loadDashboardData}
+          className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+        >
+          Riprova
+        </button>
+      </div>
+    );
+  }
+
+  const { user_summary, performance_metrics, topic_breakdown, achievements, recommendations } = dashboardData;
+
+  return (
+    <div className="space-y-8">
+      {/* Header della dashboard */}
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl p-6 shadow-lg">
+        <h1 className="text-3xl font-bold mb-2">
+          Dashboard di {user_summary.username}
+        </h1>
+        <p className="text-blue-100">
+          Panoramica completa del tuo progresso nell'apprendimento dell'inglese
+        </p>
+      </div>
+
+      {/* Statistiche rapide */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-blue-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Livello Attuale</p>
+              <p className="text-2xl font-bold text-gray-900 capitalize">
+                {user_summary.current_level}
+              </p>
+            </div>
+            <div className="text-3xl">🎯</div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Quiz Completati</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {user_summary.total_quizzes}
+              </p>
+            </div>
+            <div className="text-3xl">📝</div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-yellow-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Punteggio Medio</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {user_summary.average_score.toFixed(1)}%
+              </p>
+            </div>
+            <div className="text-3xl">📊</div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6 border-l-4 border-purple-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Streak Studio</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {user_summary.study_streak} giorni
+              </p>
+            </div>
+            <div className="text-3xl">🔥</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Grafici delle performance */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Grafico progresso temporale */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold mb-4">Progresso nel Tempo</h3>
+          <div className="h-64">
+            {prepareProgressChart() && (
+              <Line 
+                data={prepareProgressChart()!} 
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                      callbacks: {
+                        label: (context) => `Punteggio: ${context.parsed.y}%`
+                      }
+                    }
+                  },
+                  scales: {
+                    y: {
+ beginAtZero: true,
+                      max: 100,
+                      ticks: { callback: (value) => `${value}%` }
+                    }
+                  }
+                }}
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Grafico performance per argomento */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold mb-4">Performance per Argomento</h3>
+          <div className="h-64">
+            {prepareTopicChart() && (
+              <Bar
+                data={prepareTopicChart()!}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                      callbacks: {
+                        label: (context) => `Media: ${context.parsed.y.toFixed(1)}%`
+                      }
+                    }
+                  },
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                      max: 100,
+                      ticks: { callback: (value) => `${value}%` }
+                    }
+                  }
+                }}
+              />
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Analisi dettagliata argomenti */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold mb-6">Analisi Dettagliata Argomenti</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Object.entries(topic_breakdown).map(([topic, data]) => (
+            <div key={topic} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="font-medium text-gray-900">{topic}</h4>
+                <span className="text-xl">{getTrendIcon(data.trend)}</span>
+              </div>
+              
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Media:</span>
+                  <span className="font-medium">{data.average_score.toFixed(1)}%</span>
+                </div>
+                
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Tentativi:</span>
+                  <span className="font-medium">{data.total_attempts}</span>
+                </div>
+                
+                <div className="mt-3">
+                  <span className={`text-xs px-2 py-1 rounded mt-2 inline-block ${
+                        data.trend === 'improving' ? 'bg-green-100 text-green-800' :
+                        data.trend === 'declining' ? 'bg-red-100 text-red-800' :
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                    {data.trend.replace('_', ' ').toUpperCase()}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Achievements */}
+      {achievements.length > 0 && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold mb-6">Traguardi Raggiunti</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {achievements.map((achievement, index) => (
+              <div key={index} className="flex items-center p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                <span className="text-2xl mr-3">{achievement.icon}</span>
+                <div>
+                  <h4 className="font-medium text-gray-900">{achievement.title}</h4>
+                  <p className="text-sm text-gray-600">{achievement.description}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {new Date(achievement.earned_date).toLocaleDateString('it-IT')}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Raccomandazioni personalizzate */}
+      {recommendations.length > 0 && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold mb-6">Raccomandazioni Personalizzate</h3>
+          <div className="space-y-4">
+            {recommendations.map((rec, index) => {
+              const priorityColors = {
+                high: 'border-red-200 bg-red-50',
+                medium: 'border-yellow-200 bg-yellow-50',
+                low: 'border-blue-200 bg-blue-50'
+              };
+              
+              return (
+                <div key={index} className={`p-4 rounded-lg border ${priorityColors[rec.priority as keyof typeof priorityColors]}`}>
+                  <div className="flex items-start">
+                    <span className="text-lg mr-3">💡</span>
+                    <div>
+                      <p className="text-gray-800">{rec.message}</p>
+                      <span className={`text-xs px-2 py-1 rounded mt-2 inline-block ${
+                        rec.priority === 'high' ? 'bg-red-100 text-red-800' :
+                        rec.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-blue-100 text-blue-800'
+                      }`}>
+                        Priorità {rec.priority.toUpperCase()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default Dashboard;
+\end{lstlisting}
+
+\section{Funzionalità Principali}
+
+\subsection{L'Ecosistema Educativo Completo}
+
+Le funzionalità principali della piattaforma non sono elementi isolati, ma componenti di un ecosistema educativo integrato che lavora sinergicamente per massimizzare l'efficacia dell'apprendimento. Ogni funzionalità è progettata per rafforzare e complementare le altre, creando un'esperienza di apprendimento coesa e progressiva.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance=2.5cm,
+    feature/.style={rectangle, rounded corners=draw=#1!70, fill=#1!20, minimum width=3.5cm, minimum height=2cm, text centered, drop shadow},
+    connection/.style={<->, thick, >=stealth, #1},
+    center/.style={circle, draw=purple!70, fill=purple!20, minimum size=2.5cm, text centered, font=\bfseries}
+]
+
+% Funzionalità centrale
+\node[center] (core) at (0,0) {\textbf{Studente}\\al Centro};
+
+% Funzionalità principali disposte in cerchio
+\node[feature=blue] (auth) at (0,4) {\textbf{Sistema di}\par Autenticazione\par\vspace{0.1cm}Sicurezza e\par Personalizzazione};
+
+\node[feature=green] (adaptive) at (3.5,2.8) {\textbf{Quiz Adattivi}\par AI-Powered\par\vspace{0.1cm}Contenuti\par Personalizzati};
+
+\node[feature=orange] (teacher) at (3.5,-2.8) {\textbf{AI Teacher}\par Assistente Virtuale\par\vspace{0.1cm}Supporto\par Conversazionale};
+
+\node[feature=red] (analytics) at (0,-4) {\textbf{Analytics}\par Performance Tracking\par\vspace{0.1cm}Insights\par Predittivi};
+
+\node[feature=yellow] (progression) at (-3.5,-2.8) {\textbf{Sistema di}\par Progressione\par\vspace{0.1cm}Avanzamento\par Automatico};
+
+\node[feature=purple] (dashboard) at (-3.5,2.8) {\textbf{Dashboard}\par Visualizzazione\par\vspace{0.1cm}Progresso\par Interattivo};
+
+% Connessioni bidirezionali
+\draw[connection=blue] (core) -- (auth);
+\draw[connection=green] (core) -- (adaptive);
+\draw[connection=orange] (core) -- (teacher);
+\draw[connection=red] (core) -- (analytics);
+\draw[connection=yellow] (core) -- (progression);
+\draw[connection=purple] (core) -- (dashboard);
+
+% Connessioni tra funzionalità (integrazione)
+\draw[connection=gray, dashed] (auth) -- (dashboard);
+\draw[connection=gray, dashed] (dashboard) -- (progression);
+\draw[connection=gray, dashed] (progression) -- (analytics);
+\draw[connection=gray, dashed] (analytics) -- (teacher);
+\draw[connection=gray, dashed] (teacher) -- (adaptive);
+\draw[connection=gray, dashed] (adaptive) -- (auth);
+
+\end{tikzpicture}
+\caption{Ecosistema Integrato delle Funzionalità: Sinergia Educativa}
+\label{fig:feature-ecosystem}
+\end{figure}
+
+\subsection{Apprendimento Adattivo: Il Cuore Intelligente}
+
+L'apprendimento adattivo rappresenta la funzionalità più rivoluzionaria della piattaforma, dove l'intelligenza artificiale incontra la scienza pedagogica per creare percorsi educativi unici e personalizzati. Questo sistema non si limita a presentare contenuti di difficoltà crescente; analizza continuamente le performance, identifica pattern di apprendimento e adatta dinamicamente l'esperienza educativa.
+
+Il processo inizia con il \textbf{primo quiz di valutazione}, un assessment completo che stabilisce il baseline di competenze dello studente. Durante questo quiz, il sistema non si limita a registrare risposte corrette e incorrette; analizza tempo di risposta, pattern di esitazione, e tipologie di errori per costruire un profilo di apprendimento iniziale.
+
+Una volta completato il primo quiz, si attiva il \textbf{motore di personalizzazione}, che genera contenuti specificamente calibrati per le esigenze individuali. Il sistema considera:
+
+\begin{itemize}
+\item \textbf{Aree di forza}: Argomenti in cui lo studente dimostra competenza, che vengono utilizzati per mantenere motivazione e fiducia
+\item \textbf{Aree di debolezza}: Concetti che necessitano rinforzo, che diventano il focus principale del contenuto generato
+\item \textbf{Velocità di apprendimento}: Ritmo individuale che determina la progressione attraverso i livelli di difficoltà
+\item \textbf{Stile di apprendimento}: Preferenze per tipi specifici di contenuto (visuale, testuale, contestuale)
+\end{itemize}
+
+\subsection{AI Teacher: Il Tutor Virtuale Sempre Disponibile}
+
+L'AI Teacher rappresenta l'evoluzione del supporto educativo, un assistente virtuale che combina la vastità di conoscenza di Mistral 7B con la sensibilità pedagogica necessaria per l'educazione linguistica. Non è semplicemente un chatbot; è un tutor digitale progettato per comprendere le sfumature dell'apprendimento dell'inglese e fornire supporto personalizzato.
+
+Il sistema di chat intelligente utilizza il contesto completo del profilo utente per fornire risposte appropriate al livello di competenza. Quando uno studente principiante pone una domanda sulla grammatica inglese, l'AI Teacher utilizza vocabolario semplice e esempi familiari. Per studenti avanzati, le spiegazioni includono sfumature linguistiche e contesto culturale.
+
+\subsection{Analytics Predittive: Trasformare Dati in Saggezza}
+
+Il sistema di analytics va oltre la semplice raccolta di statistiche; implementa machine learning per identificare pattern nascosti e generare insights predittivi. Analizza non solo cosa uno studente ha imparato, ma come ha imparato, predicendo aree di difficoltà future e identificando opportunità di accelerazione.
+
+Le metriche tracciare includono:
+\begin{itemize}
+\item \textbf{Learning Velocity}: Velocità di acquisizione di nuove competenze
+\item \textbf{Retention Rate}: Capacità di mantenere competenze nel tempo
+\item \textbf{Engagement Patterns}: Orari e modalità di studio più efficaci
+\end{itemize}
+
+\chapter{Dettagli di Implementazione}
+
+\section{Configurazione Iniziale}
+
+La configurazione iniziale della piattaforma è stata progettata per essere semplice e veloce, permettendo agli sviluppatori di mettere in funzione l'intero sistema con pochi comandi. Abbiamo utilizzato Docker per containerizzare i vari servizi, garantendo coerenza tra gli ambienti di sviluppo, test e produzione.
+
+\begin{lstlisting}[style=bash, caption=Script di Installazione Iniziale, label=lst:installation-script]
+# script/install.sh
+
+# Aggiorna e installa dipendenze di sistema
+apt-get update && apt-get install -y \
+  python3-pip \
+  python3-dev \
+  mongodb \
+  docker.io \
+  docker-compose
+
+# Installa le dipendenze Python
+pip3 install -r requirements.txt
+
+# Avvia i servizi Docker
+docker-compose up -d
+
+# Crea e attiva l'ambiente virtuale Python
+python3 -m venv venv
+source venv/bin/activate
+
+# Migrazioni del database
+python3 -m app.db migrate
+python3 -m app.db upgrade
+
+# Popola il database con dati iniziali
+python3 -m app.db seed
+
+echo "Installazione completata. Accedi alla piattaforma su http://localhost:8000"
+\end{lstlisting}
+
+\section{Struttura delle Cartelle}
+
+La struttura delle cartelle è organizzata per riflettere l'architettura a moduli della piattaforma, con ogni componente principale che ha la propria directory sotto \texttt{app/}. Questa organizzazione facilita la manutenibilità e la scalabilità del codice.
+
+\begin{verbatim}
+app/
+├── api/
+│   ├── v1/
+│   │   ├── auth.py
+│   │   ├── quiz.py
+│   │   └── user.py
+│   └── v2/
+│       ├── auth.py
+│       ├── quiz.py
+│       └── user.py
+├── models/
+│   ├── user_model.py
+│   ├── quiz_model.py
+│   └── learning_model.py
+├── routes/
+│   ├── auth.py
+│   ├── quiz_generator.py
+│   ├── evaluations.py
+│   └── performance.py
+├── db/
+│   ├── migrations/
+│   ├── seeds/
+│   └── db.py
+└── main.py
+\end{verbatim}
+
+\section{Dettagli di Configurazione di FastAPI}
+
+FastAPI è stato configurato per sfruttare appieno le sue capacità asincrone e la sua integrazione con Pydantic per la validazione dei dati. Abbiamo definito modelli chiari e concisi per ogni risorsa API, garantendo che le richieste e le risposte siano sempre ben strutturate e valide.
+
+\begin{lstlisting}[style=pythonstyle, caption=Configurazione di FastAPI, label=lst:fastapi-config]
+# backend/app/main.py
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from app.routes import auth, quiz_generator, evaluations, performance
+
+app = FastAPI(
+    title="Piattaforma AI per l'Apprendimento dell'Inglese",
+    description="API per la gestione di quiz adattivi e analisi delle performance",
+    version="1.0",
+    contact={
+        "name": "Team di Sviluppo",
+        "email": "sviluppo@piattaformaai.com"
+    }
+)
+
+# Configurazione CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Inclusione delle rotte
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
+app.include_router(quiz_generator.router, prefix="/api/v1/quiz", tags=["quiz"])
+app.include_router(evaluations.router, prefix="/api/v1/evaluations", tags=["evaluations"])
+app.include_router(performance.router, prefix="/api/v1/performance", tags=["performance"])
+
+@app.get("/")
+async def root():
+    return {"message": "Benvenuto nella Piattaforma AI per l'Apprendimento dell'Inglese"}
+\end{lstlisting}
+
+\section{Sicurezza e Autenticazione}
+
+La sicurezza è stata una priorità sin dall'inizio del processo di sviluppo. Abbiamo implementato pratiche di sicurezza avanzate, tra cui:
+
+\begin{itemize}
+\item \textbf{Hashing delle password}: Utilizzo di SHA-256 con salt unici per ogni utente.
+\item \textbf{Token JWT}: Per la gestione sicura delle sessioni utente.
+\item \textbf{Rate limiting}: Per prevenire attacchi di forza bruta.
+\item \textbf{Validazione dei dati}: Con Pydantic per prevenire attacchi di injection.
+\end{itemize}
+
+\chapter{Appendici}
+
+\section{Glossario dei Termini}
+
+\begin{description}
+\item[AI Teacher:] Assistente virtuale basato su intelligenza artificiale, progettato per supportare gli studenti nell'apprendimento dell'inglese.
+\item[Adaptive Learning:] Approccio all'apprendimento che utilizza algoritmi per adattare i contenuti e le valutazioni alle esigenze individuali dello studente.
+\item[FastAPI:] Framework web per Python, utilizzato per costruire API veloci e performanti con supporto per la programmazione asincrona.
+\item[JWT:] JSON Web Token, un metodo per rappresentare le informazioni di autenticazione in modo sicuro tra due parti.
+\item[MongoDB:] Database NoSQL orientato ai documenti, utilizzato per la persistenza dei dati nella piattaforma.
+\item[Pydantic:] Libreria per la validazione dei dati in Python, utilizzata per garantire che i dati delle richieste API siano corretti e completi.
+\end{description}
+
+\section{Risorse Utili}
+
+\begin{itemize}
+\item \href{https://fastapi.tiangolo.com/}{Documentazione di FastAPI}
+\item \href{https://docs.mongodb.com/}{Documentazione di MongoDB}
+\item \href{https://pydantic-docs.helpmanual.io/}{Documentazione di Pydantic}
+\item \href{https://reactjs.org/docs/getting-started.html}{Documentazione di React}
+\item \href{https://www.typescriptlang.org/docs/}{Documentazione di TypeScript}
+\end{itemize}
+
+\end{document}
