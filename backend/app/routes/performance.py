@@ -81,9 +81,11 @@ async def get_detailed_user_performance(current_user: Dict = Depends(get_current
                 topic_performance[topic_name]["total"] += perf["total"]
         
         # Convert to percentages and include average scores
+        # Filter out deprecated topics: Pronunciation and Tenses
+        allowed_topics = ["Grammar", "Vocabulary", "Reading", "Writing", "Listening", "Mixed"]
         topic_percentages = {}
         for topic, perf in topic_performance.items():
-            if perf["total"] > 0:
+            if topic in allowed_topics and perf["total"] > 0:
                 percentage = round((perf["correct"] / perf["total"]) * 100, 1)
                 average_score = round(sum(topic_scores.get(topic, [0])) / len(topic_scores.get(topic, [1])), 1)
                 

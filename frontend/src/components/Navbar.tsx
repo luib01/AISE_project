@@ -15,7 +15,7 @@ const Navbar: React.FC = () => {
   return (
     <header className="bg-gray-900 text-white shadow">
       <nav className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-        <div className="font-bold text-xl">English Learning Platform</div>
+        <div className="font-bold text-xl">AISE - AI Second-language Educator</div>
         
         <div className="flex items-center space-x-4">
           {/* Navigation Links */}

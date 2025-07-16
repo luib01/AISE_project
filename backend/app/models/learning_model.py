@@ -95,6 +95,7 @@ def update_user_progress(user_id: str, topic: str, progress: float) -> None:
 def calculate_adaptive_level(user_id: str, quiz_score: int, topic_performance: Dict) -> str:
     """
     Calculate the appropriate English level based on performance using config thresholds.
+    Modified to only allow upward progression - users never get demoted to lower levels.
     Returns: 'beginner', 'intermediate', or 'advanced'
     """
     user_profile = get_user_profile(user_id)
@@ -112,17 +113,17 @@ def calculate_adaptive_level(user_id: str, quiz_score: int, topic_performance: D
     avg_score = sum(quiz.get("score", 0) for quiz in recent_quizzes) / len(recent_quizzes)
     
     # Level progression logic using config thresholds
+    # Modified to only allow upward progression, never retrocession
     if current_level == "beginner":
         if avg_score >= config.LEVEL_UP_THRESHOLD and len(recent_quizzes) >= config.MIN_QUIZZES_FOR_LEVEL_CHANGE:
             return "intermediate"
     elif current_level == "intermediate":
         if avg_score >= config.LEVEL_UP_THRESHOLD + 5 and len(recent_quizzes) >= config.MIN_QUIZZES_FOR_LEVEL_CHANGE:  # Higher threshold for advanced
             return "advanced"
-        elif avg_score < config.LEVEL_DOWN_THRESHOLD:
-            return "beginner"
+        # Removed retrocession logic - users stay at intermediate level
     elif current_level == "advanced":
-        if avg_score < config.LEVEL_DOWN_THRESHOLD + 10:  # Higher threshold to not demote too easily
-            return "intermediate"
+        # Removed retrocession logic - users stay at advanced level
+        pass
     
     return current_level
 
@@ -175,23 +176,15 @@ def save_quiz_results(user_id: str, quiz_data: dict, score: int, topic: str, dif
     if total_quizzes == 1:
         update_data["has_completed_first_quiz"] = True
     
-    # Add level change notification if level changed
+    # Add level change notification if level changed (only progression possible now)
     if new_level != current_level:
         update_data["level_changed"] = True
         update_data["previous_level"] = current_level
         update_data["level_change_date"] = datetime.utcnow()
         
-        # Determine if it's progression or retrocession
-        level_order = {"beginner": 1, "intermediate": 2, "advanced": 3}
-        current_order = level_order.get(current_level, 1)
-        new_order = level_order.get(new_level, 1)
-        
-        if new_order > current_order:
-            update_data["level_change_type"] = "progression"
-            update_data["level_change_message"] = f"Congratulations! You've progressed from {current_level} to {new_level} level!"
-        else:
-            update_data["level_change_type"] = "retrocession"
-            update_data["level_change_message"] = f"Your level has changed from {current_level} to {new_level}. Keep practicing to improve!"
+        # Since retrocession is disabled, this will always be progression
+        update_data["level_change_type"] = "progression"
+        update_data["level_change_message"] = f"Congratulations! You've progressed from {current_level} to {new_level} level!"
     
     # Update the users collection (auth users)
     update_result = db.users.update_one(

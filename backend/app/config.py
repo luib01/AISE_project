@@ -23,7 +23,7 @@ class Config:
     OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "mistral:7b")
     
     # Ollama API Settings
-    OLLAMA_TIMEOUT = int(os.getenv("OLLAMA_TIMEOUT", "180"))
+    OLLAMA_TIMEOUT = int(os.getenv("OLLAMA_TIMEOUT", "300"))  # Increased from 180 to 300 seconds (5 minutes)
     OLLAMA_TEMPERATURE = float(os.getenv("OLLAMA_TEMPERATURE", "0.7"))
     OLLAMA_MAX_TOKENS = int(os.getenv("OLLAMA_MAX_TOKENS", "4000"))
     

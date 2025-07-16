@@ -25,7 +25,7 @@ const HomePage: React.FC = () => {
             Welcome back, {user?.username}!
           </h1>
           <p className="max-w-2xl text-lg mb-2">
-            Continue your English learning journey with adaptive quizzes and AI Teacher assistance!
+            Continue your learning journey with AISE's adaptive quizzes and AI Teacher assistance!
           </p>
           <p className="text-sm mb-6 opacity-90">
             Current Level: <span className="font-semibold capitalize">{user?.english_level}</span>
@@ -65,10 +65,10 @@ const HomePage: React.FC = () => {
       ) : (
         <>
           <h1 className="text-4xl font-bold mb-4">
-            Welcome to the English Learning Platform
+            Welcome to AISE
           </h1>
           <p className="max-w-2xl text-lg mb-6">
-            Improve your English with adaptive quizzes, personalized recommendations, and AI Teacher assistance!
+            Improve your English with AISE's adaptive quizzes, personalized recommendations, and AI Teacher assistance!
           </p>
           <div className="space-x-4">
             <a
@@ -142,7 +142,7 @@ const App: React.FC = () => {
             </Routes>
           </main>
           <footer className="bg-gray-900 text-white text-center py-2">
-            &copy; {new Date().getFullYear()} English Learning Platform
+            &copy; {new Date().getFullYear()} AISE
           </footer>
         </div>
       </Router>

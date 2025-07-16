@@ -333,7 +333,7 @@ ollama serve
 
 #### **Static Quiz (Initial Assessment)**
 - **Purpose**: Establish baseline proficiency and learning patterns
-- **Format**: 4 curated questions covering Grammar, Vocabulary, Tenses, and Pronunciation
+- **Format**: 4 curated questions covering Grammar and Vocabulary
 - **Scoring**: Detailed feedback with explanations for each answer
 - **Access**: Available to all authenticated users
 

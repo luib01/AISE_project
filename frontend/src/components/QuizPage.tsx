@@ -34,7 +34,7 @@ const QuizPage: React.FC = () => {
     },
     {
       id: "q3",
-      topic: "Tenses",
+      topic: "Grammar",
       text: "Complete the sentence: 'I _____ to London last year.'",
       options: ["go", "went", "going", "have gone"],
       correct: "went",
@@ -42,11 +42,11 @@ const QuizPage: React.FC = () => {
     },
     {
       id: "q4",
-      topic: "Pronunciation",
-      text: "Which word rhymes with 'cat'?",
-      options: ["Cut", "Bat", "Dog", "Cup"],
-      correct: "Bat",
-      explanation: "'Bat' rhymes with 'cat' because both end with the '-at' sound. The other words have different ending sounds: 'cut' (-ut), 'dog' (-og), 'cup' (-up)."
+      topic: "Vocabulary",
+      text: "Which word means 'very large'?",
+      options: ["Tiny", "Huge", "Small", "Average"],
+      correct: "Huge",
+      explanation: "'Huge' means extremely large or enormous. The other options refer to smaller sizes or normal size."
     },
   ];
 
@@ -81,7 +81,7 @@ const QuizPage: React.FC = () => {
       const response = await apiClient.post(QUIZ_EVALUATION_ENDPOINT, {
         quiz_data: { questions: quizData },
         score,
-        topic: "English",
+        topic: "Mixed",
       });
       console.log("Quiz submission:", response.data);
       setQuizResult(response.data);
@@ -133,7 +133,7 @@ const QuizPage: React.FC = () => {
 
   return (
     <div className="bg-white p-6 rounded-lg shadow text-gray-800 max-w-2xl mx-auto">
-      <h2 className="text-2xl font-semibold mb-6">English Learning Quiz</h2>
+      <h2 className="text-2xl font-semibold mb-6">AISE Assessment Quiz - Grammar & Vocabulary</h2>
       {!submitted && (
         <>
           {questions.map((q) => (

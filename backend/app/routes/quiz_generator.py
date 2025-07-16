@@ -1,6 +1,7 @@
 # backend/app/routes/quiz_generator.py
 import requests
 import json
+import random
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import List, Optional, Dict
@@ -220,88 +221,146 @@ async def generate_adaptive_quiz(
         ollama_config = config.get_ollama_config()
         api_url = f"{ollama_config['base_url']}/api/generate"
         
-        payload = {
-            "model": ollama_config['model'],
-            "prompt": prompt,
-            "stream": False,
-            "options": {
-                "temperature": 0.8,  # Increased for more variety
-                "num_predict": ollama_config['options']['max_tokens'],
-                "top_p": 0.9,
-                "repeat_penalty": 1.1
-            }
-        }
-        
-        response = requests.post(api_url, json=payload, timeout=ollama_config['timeout'])
-        response.raise_for_status()
-        data = response.json()
-        
-        generated_text = data.get("response", "")
-        
-        # Parse JSON response
-        try:
-            # Extract JSON from response
-            start_idx = generated_text.find('{')
-            end_idx = generated_text.rfind('}') + 1
-            
-            if start_idx == -1 or end_idx == -1:
-                raise ValueError("No JSON found in response")
-            
-            json_str = generated_text[start_idx:end_idx]
-            quiz_data = json.loads(json_str)
-            
-            # Validate that we have exactly 4 questions with proper structure
-            questions = quiz_data.get("questions", [])
-            valid_questions = 0
-            
-            for i, question in enumerate(questions):
-                # Check if question has all required fields and 4 options
-                required_fields = ['question', 'options', 'correct_answer', 'explanation', 'topic', 'difficulty']
-                if (all(field in question for field in required_fields) and 
-                    isinstance(question.get('options'), list) and 
-                    len(question.get('options', [])) == 4):
+        # Retry mechanism for AI generation
+        max_retries = 2  # Try up to 2 times before fallback
+        for attempt in range(max_retries):
+            try:
+                print(f"DEBUG: AI generation attempt {attempt + 1}/{max_retries}")
+                
+                payload = {
+                    "model": ollama_config['model'],
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": {
+                        "temperature": 0.8 + (attempt * 0.1),  # Slightly increase temperature on retry
+                        "num_predict": ollama_config['options']['max_tokens'],
+                        "top_p": 0.9,
+                        "repeat_penalty": 1.1
+                    }
+                }
+                
+                response = requests.post(api_url, json=payload, timeout=ollama_config['timeout'])
+                response.raise_for_status()
+                data = response.json()
+                
+                generated_text = data.get("response", "")
+                
+                # Parse JSON response
+                try:
+                    # Extract JSON from response
+                    start_idx = generated_text.find('{')
+                    end_idx = generated_text.rfind('}') + 1
                     
-                    # Additional validation: correct_answer must be exactly one of the options
-                    correct_answer = question.get('correct_answer', '')
-                    options = question.get('options', [])
+                    if start_idx == -1 or end_idx == -1:
+                        raise ValueError("No JSON found in response")
                     
-                    if correct_answer in options:
-                        valid_questions += 1
+                    json_str = generated_text[start_idx:end_idx]
+                    quiz_data = json.loads(json_str)
+                    
+                    # Validate that we have at least 3 questions with proper structure
+                    questions = quiz_data.get("questions", [])
+                    valid_questions = []
+                    
+                    for i, question in enumerate(questions):
+                        # Check if question has all required fields and 4 options
+                        required_fields = ['question', 'options', 'correct_answer', 'explanation', 'topic', 'difficulty']
+                        if (all(field in question for field in required_fields) and 
+                            isinstance(question.get('options'), list) and 
+                            len(question.get('options', [])) == 4):
+                            
+                            # Additional validation: correct_answer must be exactly one of the options
+                            correct_answer = question.get('correct_answer', '')
+                            options = question.get('options', [])
+                            
+                            if correct_answer in options:
+                                valid_questions.append(question)
+                            else:
+                                print(f"DEBUG: Question {i+1} correct_answer '{correct_answer}' not found in options: {options}")
+                    
+                    # Accept AI-generated quiz if we have at least 3 valid questions
+                    if len(valid_questions) >= 3:
+                        # If we have exactly 3 valid questions, add 1 randomly selected fallback question
+                        if len(valid_questions) == 3:
+                            print(f"DEBUG: AI generated {len(valid_questions)} valid questions. Adding 1 randomly selected fallback question.")
+                            fallback_quiz = create_adaptive_fallback_quiz(request.topic, difficulty, request.previous_questions, weak_topics)
+                            fallback_questions_available = fallback_quiz["questions"]
+                            
+                            # Randomly select one fallback question
+                            random_fallback = random.choice(fallback_questions_available)
+                            valid_questions.append(random_fallback)
+                            print(f"DEBUG: Added random fallback question: '{random_fallback['question'][:50]}...'")
+                        
+                        # If we have more than 4 valid questions, keep only the first 4
+                        elif len(valid_questions) > 4:
+                            valid_questions = valid_questions[:4]
+                            print(f"DEBUG: AI generated {len(valid_questions)} valid questions. Using first 4.")
+                        
+                        # Update quiz_data with valid questions (should be exactly 4 now)
+                        quiz_data["questions"] = valid_questions
+                        print(f"DEBUG: Final quiz has {len(quiz_data['questions'])} questions")
+                        print(f"DEBUG: Using AI-generated quiz with {len(valid_questions)} valid questions")
+                        
+                        # Add comprehensive metadata
+                        quiz_data["user_level"] = current_level
+                        quiz_data["generated_for_level"] = difficulty
+                        quiz_data["weak_topics"] = weak_topics
+                        quiz_data["user_id"] = user_id
+                        quiz_data["model_used"] = ollama_config['model']
+                        quiz_data["topic_requested"] = request.topic
+                        quiz_data["questions_count"] = len(quiz_data.get("questions", []))
+                        quiz_data["previous_questions_considered"] = len(request.previous_questions) if request.previous_questions else 0
+                        quiz_data["recent_topics"] = recent_topics[-5:] if recent_topics else []
+                        quiz_data["avoided_subtopics"] = list(set(recent_subtopics[-8:])) if recent_subtopics else []
+                        quiz_data["generation_attempt"] = attempt + 1
+                        quiz_data["ai_questions"] = len([q for q in quiz_data["questions"] if not q.get("fallback", False)])
+                        quiz_data["fallback_questions"] = len([q for q in quiz_data["questions"] if q.get("fallback", False)])
+                        
+                        # Extract subtopics covered for future reference
+                        subtopics_covered = []
+                        for question in quiz_data.get("questions", []):
+                            if "subtopic" in question:
+                                subtopics_covered.append(question["subtopic"])
+                        quiz_data["subtopics_covered"] = subtopics_covered
+                        
+                        return quiz_data
                     else:
-                        print(f"DEBUG: Question {i+1} correct_answer '{correct_answer}' not found in options: {options}")
+                        print(f"DEBUG: Attempt {attempt + 1} - AI generated only {len(valid_questions)} valid questions (need at least 3).")
+                        if attempt < max_retries - 1:
+                            print(f"DEBUG: Retrying with adjusted parameters...")
+                            continue
+                        
+                except (json.JSONDecodeError, ValueError) as e:
+                    print(f"DEBUG: Attempt {attempt + 1} - JSON parsing failed: {str(e)}")
+                    if attempt < max_retries - 1:
+                        print(f"DEBUG: Retrying with adjusted parameters...")
+                        continue
+                    
+            except requests.exceptions.RequestException as e:
+                print(f"DEBUG: Attempt {attempt + 1} - Request failed: {str(e)}")
+                if attempt < max_retries - 1:
+                    print(f"DEBUG: Retrying...")
+                    continue
+                else:
+                    raise HTTPException(status_code=500, detail=f"Ollama connection error after {max_retries} attempts: {str(e)}")
+        
+        # If all attempts failed, use fallback
+        print(f"DEBUG: All {max_retries} AI generation attempts failed. Using full fallback.")
+        quiz_data = create_adaptive_fallback_quiz(request.topic, difficulty, request.previous_questions, weak_topics)
+        
+        # Add metadata for fallback quiz
+        quiz_data["user_level"] = current_level
+        quiz_data["generated_for_level"] = difficulty
+        quiz_data["weak_topics"] = weak_topics
+        quiz_data["user_id"] = user_id
+        quiz_data["topic_requested"] = request.topic
+        quiz_data["questions_count"] = len(quiz_data.get("questions", []))
+        quiz_data["previous_questions_considered"] = len(request.previous_questions) if request.previous_questions else 0
+        quiz_data["recent_topics"] = recent_topics[-5:] if recent_topics else []
+        quiz_data["avoided_subtopics"] = list(set(recent_subtopics[-8:])) if recent_subtopics else []
+        quiz_data["generation_attempt"] = "fallback_after_retries"
+        
+        return quiz_data
             
-            if len(questions) != 4 or valid_questions != 4:
-                # If not exactly 4 valid questions, create fallback quiz
-                print(f"DEBUG: AI generated {len(questions)} questions, {valid_questions} valid. Using fallback.")
-                quiz_data = create_adaptive_fallback_quiz(request.topic, difficulty, request.previous_questions, weak_topics)
-            
-            # Add comprehensive metadata
-            quiz_data["user_level"] = current_level
-            quiz_data["generated_for_level"] = difficulty
-            quiz_data["weak_topics"] = weak_topics
-            quiz_data["user_id"] = user_id
-            quiz_data["model_used"] = ollama_config['model']
-            quiz_data["topic_requested"] = request.topic
-            quiz_data["questions_count"] = len(quiz_data.get("questions", []))
-            quiz_data["previous_questions_considered"] = len(request.previous_questions) if request.previous_questions else 0
-            quiz_data["recent_topics"] = recent_topics[-5:] if recent_topics else []
-            quiz_data["avoided_subtopics"] = list(set(recent_subtopics[-8:])) if recent_subtopics else []
-            
-            # Extract subtopics covered for future reference
-            subtopics_covered = []
-            for question in quiz_data.get("questions", []):
-                if "subtopic" in question:
-                    subtopics_covered.append(question["subtopic"])
-            quiz_data["subtopics_covered"] = subtopics_covered
-            
-            return quiz_data
-            
-        except (json.JSONDecodeError, ValueError) as e:
-            # Fallback: create an adaptive quiz if JSON parsing fails
-            return create_adaptive_fallback_quiz(request.topic, difficulty, request.previous_questions, weak_topics)
-            
-    except requests.exceptions.RequestException as e:
-        raise HTTPException(status_code=500, detail=f"Ollama connection error: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Quiz generation error: {str(e)}")
 
@@ -894,6 +953,10 @@ def create_adaptive_fallback_quiz(topic: str, difficulty: str, previous_question
         else:
             other_questions.append(question)
     
+    # Randomize the order of questions to ensure variety
+    random.shuffle(weak_topic_questions)
+    random.shuffle(other_questions)
+    
     # Try to include questions from weak topics first
     selected_questions.extend(weak_topic_questions[:2])  # Max 2 from weak topics
     remaining_needed = 4 - len(selected_questions)
@@ -902,15 +965,24 @@ def create_adaptive_fallback_quiz(topic: str, difficulty: str, previous_question
     # If still not enough, add more from any available
     if len(selected_questions) < 4:
         all_available = weak_topic_questions + other_questions
+        random.shuffle(all_available)  # Randomize the combined list
         for question in all_available:
             if question not in selected_questions and len(selected_questions) < 4:
                 selected_questions.append(question)
     
-    # Ensure we have exactly 4 questions
+    # Ensure we have exactly 4 questions - use random selection instead of modulo
     while len(selected_questions) < 4:
-        selected_questions.append(questions_pool[len(selected_questions) % len(questions_pool)])
+        available_pool = [q for q in questions_pool if q not in selected_questions]
+        if available_pool:
+            selected_questions.append(random.choice(available_pool))
+        else:
+            # If we've used all questions, start over with random selection
+            selected_questions.append(random.choice(questions_pool))
     
     selected_questions = selected_questions[:4]  # Limit to exactly 4
+    
+    # Final shuffle to randomize the order of questions presented to user
+    random.shuffle(selected_questions)
     
     return {
         "questions": selected_questions,

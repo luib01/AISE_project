@@ -174,7 +174,7 @@ const AdaptiveQuizPage: React.FC = () => {
 
   return (
     <div className="bg-white p-6 rounded-lg shadow text-gray-800 max-w-4xl mx-auto">
-      <h2 className="text-2xl font-semibold mb-6">Adaptive English Learning Quiz</h2>
+      <h2 className="text-2xl font-semibold mb-6">AISE Adaptive Quiz</h2>
       
       {/* User Profile Section */}
       {userProfile && (
