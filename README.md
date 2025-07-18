@@ -1,5 +1,4 @@
-# 🎓 AI-Powered English Learning Platform
-
+# 🎓 AISE - AI Second-language Educator
 An intelligent adaptive learning system that personalizes English education through AI-driven quizzes, real-time performance tracking, and interactive teaching. The platform features comprehensive user authentication, adaptive learning algorithms, and an AI Teacher powered by **Mistral 7B** for conversational learning support.
 
 ## 🏆 Quality Status
