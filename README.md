@@ -621,7 +621,7 @@ docker-compose -f docker-compose.dev.yml up -d --build
 
 ## 🤝 Contributing
 
-We welcome contributions to improve the English Learning Platform! Here's how you can help:
+We welcome contributions to improve AISE - AI Second-language Educator!
 
 ### Development Guidelines
 
